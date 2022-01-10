@@ -1,0 +1,17 @@
+syntax = "proto3";
+package pb;
+
+service PaymentService {
+  rpc PayBill(PayReq) returns (PayResp);
+}
+
+message PayReq {
+  int64 bill_num = 1;
+  int64 account_num = 2;
+  string pay_password = 3;
+}
+
+message PayResp {
+  bool status = 1;
+  string msg = 2;
+}

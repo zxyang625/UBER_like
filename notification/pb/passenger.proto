@@ -1,0 +1,36 @@
+syntax = "proto3";
+package pb;
+
+service PassengerService {
+  rpc GetPassengerInfo(PassengerInfoReq) returns (PassengerInfoResp);
+  rpc PublishOrder(PassengerReq) returns (PassengerResp);
+}
+
+message PassengerInfoReq {
+  string username = 1;
+  string password = 2;
+}
+
+message PassengerInfoResp {
+  int64 user_id = 1;
+  string name = 2;
+  int32 age = 3;
+  int64 account_num = 4;
+  float asset = 5;
+}
+
+message PassengerReq {
+  int64 passenger_id = 1;
+  int64 start_time = 2;
+  string origin = 3;
+  string destination = 4;
+  string passenger_name = 5;
+}
+
+message PassengerResp {
+  bool status = 1;
+  string driver_name = 2;
+  string location = 3;
+  string car = 4;
+  string path = 5;
+}
