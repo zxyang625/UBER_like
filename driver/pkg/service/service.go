@@ -1,5 +1,7 @@
 package service
 
+type
+
 // DriverService describes the service.
 type DriverService interface {
 	// Add your methods here

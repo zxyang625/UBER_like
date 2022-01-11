@@ -21,7 +21,8 @@ const (
 	LoadBalancerInitFail
 	LoadBalancerSelectFail
 
-	ZipkinNewTracerFail
+	TracingEmptyService
+	TracingNewTracerFail
 )
 
 func Errorf(c code, format string, a ...interface{}) error {

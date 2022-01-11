@@ -32,13 +32,8 @@ func New(instance string, options map[string][]http.ClientOption) (service.Payme
 		payEndpoint = http.NewClient("POST", copyURL(u, "/pay"), encodeHTTPGenericRequest, decodePayResponse, options["Pay"]...).Endpoint()
 	}
 
-	var discoveryServiceEndpoint endpoint.Endpoint
-	{
-		discoveryServiceEndpoint = http.NewClient("POST", copyURL(u, "/discover-service"), encodeHTTPGenericRequest, decodeDiscoveryServiceResponse, options["DiscoverService"]...).Endpoint()
-	}
 
 	return endpoint1.Endpoints{
-		DiscoverServiceEndpoint: discoveryServiceEndpoint,
 		PayEndpoint:              payEndpoint,
 	}, nil
 }
@@ -68,18 +63,6 @@ func decodePayResponse(_ context.Context, r *http1.Response) (interface{}, error
 	return resp, err
 }
 
-// decodeDiscoveryServiceResponse is a transport/http.DecodeResponseFunc that decodes
-// a JSON-encoded concat response from the HTTP response body. If the response
-// as a non-200 status code, we will interpret that as an error and attempt to
-//  decode the specific error message from the response body.
-func decodeDiscoveryServiceResponse(_ context.Context, r *http1.Response) (interface{}, error) {
-	if r.StatusCode != http1.StatusOK {
-		return nil, http2.ErrorDecoder(r)
-	}
-	var resp endpoint1.DiscoverServiceResponse
-	err := json.NewDecoder(r.Body).Decode(&resp)
-	return resp, err
-}
 func copyURL(base *url.URL, path string) (next *url.URL) {
 	n := *base
 	n.Path = path

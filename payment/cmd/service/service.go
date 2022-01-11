@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -18,22 +17,17 @@ import (
 	service "payment/pkg/service"
 	"pkg/discover"
 	"pkg/promtheus"
+	"pkg/tracing"
 	"strconv"
 	"strings"
 	"syscall"
 
 	kitendpoint "github.com/go-kit/kit/endpoint"
 	kitlog "github.com/go-kit/kit/log"
-	lightsteptracergo "github.com/lightstep/lightstep-tracer-go"
 	group "github.com/oklog/oklog/pkg/group"
 	opentracinggo "github.com/opentracing/opentracing-go"
-	zipkingoopentracing "github.com/openzipkin-contrib/zipkin-go-opentracing"
-	zipkingo "github.com/openzipkin/zipkin-go"
-	http2 "github.com/openzipkin/zipkin-go/reporter/http"
 	promhttp "github.com/prometheus/client_golang/prometheus/promhttp"
 	grpc1 "google.golang.org/grpc"
-	appdash "sourcegraph.com/sourcegraph/appdash"
-	opentracing "sourcegraph.com/sourcegraph/appdash/opentracing"
 )
 
 var tracer opentracinggo.Tracer
@@ -47,9 +41,7 @@ var thriftAddr = fs.String("thrift-addr", ":8083", "Thrift listen address")
 var thriftProtocol = fs.String("thrift-protocol", "binary", "binary, compact, json, simplejson")
 var thriftBuffer = fs.Int("thrift-buffer", 0, "0 for unbuffered")
 var thriftFramed = fs.Bool("thrift-framed", false, "true to enable framing")
-var zipkinURL = fs.String("zipkin-url", "http://localhost:9411/api/v2/spans", "Enable Zipkin tracing via a collector URL e.g. http://localhost:9411/api/v1/spans")
-var lightstepToken = fs.String("lightstep-token", "", "Enable LightStep tracing via a LightStep access token")
-var appdashAddr = fs.String("appdash-addr", "", "Enable Appdash tracing via an Appdash server host:port")
+var zipkinURL = fs.String("zipkin-url", tracing.DefaultZipkinURL, "Enable Zipkin tracing via a collector URL e.g. http://localhost:9411/api/v1/spans")
 var serviceName = fs.String("service-name", "Payment", "default service name")
 var consulAddr = fs.String("consul-addr", "127.0.0.1", "consul listen addr")
 var consulPort = fs.Int("consul-port", 8500, "consul list port")
@@ -61,30 +53,14 @@ func Run() {
 
 	if *zipkinURL != "" {
 		logger.Log("tracer", "Zipkin", "URL", *zipkinURL)
-		reporter := http2.NewReporter(*zipkinURL)
-		defer reporter.Close()
-		endpoint, err := zipkingo.NewEndpoint("Payment", "localhost:8082")
+		tracingImpl, err := tracing.NewOpenTracingTracer(*serviceName)
 		if err != nil {
-			logger.Log("err", err)
-			os.Exit(1)
+			logger.Log("new zipkin tracer", "failed")
+			os.Exit(-1)
 		}
-		localEndpoint := zipkingo.WithLocalEndpoint(endpoint)
-		nativeTracer, err := zipkingo.NewTracer(reporter, localEndpoint)
-		if err != nil {
-			logger.Log("err", err)
-			os.Exit(1)
-		}
-		tracer = zipkingoopentracing.Wrap(nativeTracer)
-	} else if *lightstepToken != "" {
-		logger.Log("tracer", "LightStep")
-		tracer = lightsteptracergo.NewTracer(lightsteptracergo.Options{AccessToken: *lightstepToken})
-		defer lightsteptracergo.Flush(context.Background(), tracer)
-	} else if *appdashAddr != "" {
-		logger.Log("tracer", "Appdash", "addr", *appdashAddr)
-		collector := appdash.NewRemoteCollector(*appdashAddr)
-		tracer = opentracing.NewTracer(collector)
-		defer collector.Close()
-	} else {
+		tracer = tracingImpl.Tracer
+		defer tracingImpl.Reporter.Close()
+	}  else {
 		logger.Log("tracer", "none")
 		tracer = opentracinggo.GlobalTracer()
 	}
