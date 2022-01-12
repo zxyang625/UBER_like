@@ -3,25 +3,25 @@ package pb;
 import "trip.proto";
 import "billing.proto";
 
-service NoticeService {
-  rpc NoticeTrip(NoticeTripReq) returns(NoticeTripResp);
-  rpc NoticeBill(NoticeBillReq) returns (NoticeBillResp);
+service Notice {
+  rpc NoticeTrip(NoticeTripRequest) returns(NoticeTripReply);
+  rpc NoticeBill(NoticeBillRequest) returns (NoticeBillReply);
 }
 
-message NoticeTripReq {
-  Trip trip = 1;
+message NoticeTripRequest {
+  TripMsg trip_msg = 1;
 }
 
-message NoticeTripResp {
+message NoticeTripReply {
   bool status = 1;
   string msg = 2;
 }
 
-message NoticeBillReq {
-  Bill bill = 1;
+message NoticeBillRequest {
+  BillMsg bill_msg = 1;
 }
 
-message NoticeBillResp {
+message NoticeBillReply {
   bool status = 1;
   string msg = 2;
 }

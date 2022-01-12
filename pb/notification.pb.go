@@ -24,39 +24,39 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type NoticeTripReq struct {
-	Trip                 *Trip    `protobuf:"bytes,1,opt,name=trip,proto3" json:"trip,omitempty"`
+type NoticeTripRequest struct {
+	Trip                 *TripMsg `protobuf:"bytes,1,opt,name=trip,proto3" json:"trip,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *NoticeTripReq) Reset()         { *m = NoticeTripReq{} }
-func (m *NoticeTripReq) String() string { return proto.CompactTextString(m) }
-func (*NoticeTripReq) ProtoMessage()    {}
-func (*NoticeTripReq) Descriptor() ([]byte, []int) {
+func (m *NoticeTripRequest) Reset()         { *m = NoticeTripRequest{} }
+func (m *NoticeTripRequest) String() string { return proto.CompactTextString(m) }
+func (*NoticeTripRequest) ProtoMessage()    {}
+func (*NoticeTripRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_736a457d4a5efa07, []int{0}
 }
 
-func (m *NoticeTripReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_NoticeTripReq.Unmarshal(m, b)
+func (m *NoticeTripRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_NoticeTripRequest.Unmarshal(m, b)
 }
-func (m *NoticeTripReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_NoticeTripReq.Marshal(b, m, deterministic)
+func (m *NoticeTripRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_NoticeTripRequest.Marshal(b, m, deterministic)
 }
-func (m *NoticeTripReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NoticeTripReq.Merge(m, src)
+func (m *NoticeTripRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NoticeTripRequest.Merge(m, src)
 }
-func (m *NoticeTripReq) XXX_Size() int {
-	return xxx_messageInfo_NoticeTripReq.Size(m)
+func (m *NoticeTripRequest) XXX_Size() int {
+	return xxx_messageInfo_NoticeTripRequest.Size(m)
 }
-func (m *NoticeTripReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_NoticeTripReq.DiscardUnknown(m)
+func (m *NoticeTripRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_NoticeTripRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_NoticeTripReq proto.InternalMessageInfo
+var xxx_messageInfo_NoticeTripRequest proto.InternalMessageInfo
 
-func (m *NoticeTripReq) GetTrip() *Trip {
+func (m *NoticeTripRequest) GetTrip() *TripMsg {
 	if m != nil {
 		return m.Trip
 	}
@@ -110,46 +110,46 @@ func (m *NoticeTripResp) GetMsg() string {
 	return ""
 }
 
-type NoticeBillReq struct {
-	Bill                 *Bill    `protobuf:"bytes,1,opt,name=bill,proto3" json:"bill,omitempty"`
+type NoticeBillRequest struct {
+	Bill                 *BillMsg `protobuf:"bytes,1,opt,name=bill,proto3" json:"bill,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *NoticeBillReq) Reset()         { *m = NoticeBillReq{} }
-func (m *NoticeBillReq) String() string { return proto.CompactTextString(m) }
-func (*NoticeBillReq) ProtoMessage()    {}
-func (*NoticeBillReq) Descriptor() ([]byte, []int) {
+func (m *NoticeBillRequest) Reset()         { *m = NoticeBillRequest{} }
+func (m *NoticeBillRequest) String() string { return proto.CompactTextString(m) }
+func (*NoticeBillRequest) ProtoMessage()    {}
+func (*NoticeBillRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_736a457d4a5efa07, []int{2}
 }
 
-func (m *NoticeBillReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_NoticeBillReq.Unmarshal(m, b)
+func (m *NoticeBillRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_NoticeBillRequest.Unmarshal(m, b)
 }
-func (m *NoticeBillReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_NoticeBillReq.Marshal(b, m, deterministic)
+func (m *NoticeBillRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_NoticeBillRequest.Marshal(b, m, deterministic)
 }
-func (m *NoticeBillReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NoticeBillReq.Merge(m, src)
+func (m *NoticeBillRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NoticeBillRequest.Merge(m, src)
 }
-func (m *NoticeBillReq) XXX_Size() int {
-	return xxx_messageInfo_NoticeBillReq.Size(m)
+func (m *NoticeBillRequest) XXX_Size() int {
+	return xxx_messageInfo_NoticeBillRequest.Size(m)
 }
-func (m *NoticeBillReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_NoticeBillReq.DiscardUnknown(m)
+func (m *NoticeBillRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_NoticeBillRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_NoticeBillReq proto.InternalMessageInfo
+var xxx_messageInfo_NoticeBillRequest proto.InternalMessageInfo
 
-func (m *NoticeBillReq) GetBill() *Bill {
+func (m *NoticeBillRequest) GetBill() *BillMsg {
 	if m != nil {
 		return m.Bill
 	}
 	return nil
 }
 
-type NoticeBillResp struct {
+type NoticeBillReply struct {
 	Status               bool     `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
 	Msg                  string   `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -157,39 +157,39 @@ type NoticeBillResp struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *NoticeBillResp) Reset()         { *m = NoticeBillResp{} }
-func (m *NoticeBillResp) String() string { return proto.CompactTextString(m) }
-func (*NoticeBillResp) ProtoMessage()    {}
-func (*NoticeBillResp) Descriptor() ([]byte, []int) {
+func (m *NoticeBillReply) Reset()         { *m = NoticeBillReply{} }
+func (m *NoticeBillReply) String() string { return proto.CompactTextString(m) }
+func (*NoticeBillReply) ProtoMessage()    {}
+func (*NoticeBillReply) Descriptor() ([]byte, []int) {
 	return fileDescriptor_736a457d4a5efa07, []int{3}
 }
 
-func (m *NoticeBillResp) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_NoticeBillResp.Unmarshal(m, b)
+func (m *NoticeBillReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_NoticeBillReply.Unmarshal(m, b)
 }
-func (m *NoticeBillResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_NoticeBillResp.Marshal(b, m, deterministic)
+func (m *NoticeBillReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_NoticeBillReply.Marshal(b, m, deterministic)
 }
-func (m *NoticeBillResp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NoticeBillResp.Merge(m, src)
+func (m *NoticeBillReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NoticeBillReply.Merge(m, src)
 }
-func (m *NoticeBillResp) XXX_Size() int {
-	return xxx_messageInfo_NoticeBillResp.Size(m)
+func (m *NoticeBillReply) XXX_Size() int {
+	return xxx_messageInfo_NoticeBillReply.Size(m)
 }
-func (m *NoticeBillResp) XXX_DiscardUnknown() {
-	xxx_messageInfo_NoticeBillResp.DiscardUnknown(m)
+func (m *NoticeBillReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_NoticeBillReply.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_NoticeBillResp proto.InternalMessageInfo
+var xxx_messageInfo_NoticeBillReply proto.InternalMessageInfo
 
-func (m *NoticeBillResp) GetStatus() bool {
+func (m *NoticeBillReply) GetStatus() bool {
 	if m != nil {
 		return m.Status
 	}
 	return false
 }
 
-func (m *NoticeBillResp) GetMsg() string {
+func (m *NoticeBillReply) GetMsg() string {
 	if m != nil {
 		return m.Msg
 	}
@@ -197,10 +197,10 @@ func (m *NoticeBillResp) GetMsg() string {
 }
 
 func init() {
-	proto.RegisterType((*NoticeTripReq)(nil), "pb.NoticeTripReq")
+	proto.RegisterType((*NoticeTripRequest)(nil), "pb.NoticeTripRequest")
 	proto.RegisterType((*NoticeTripResp)(nil), "pb.NoticeTripResp")
-	proto.RegisterType((*NoticeBillReq)(nil), "pb.NoticeBillReq")
-	proto.RegisterType((*NoticeBillResp)(nil), "pb.NoticeBillResp")
+	proto.RegisterType((*NoticeBillRequest)(nil), "pb.NoticeBillRequest")
+	proto.RegisterType((*NoticeBillReply)(nil), "pb.NoticeBillReply")
 }
 
 func init() {
@@ -208,21 +208,22 @@ func init() {
 }
 
 var fileDescriptor_736a457d4a5efa07 = []byte{
-	// 216 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0xca, 0xcb, 0x2f, 0xc9,
-	0x4c, 0xcb, 0x4c, 0x4e, 0x2c, 0xc9, 0xcc, 0xcf, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62,
-	0x2a, 0x48, 0x92, 0xe2, 0x2a, 0x29, 0xca, 0x2c, 0x80, 0xf0, 0xa5, 0x78, 0x93, 0x32, 0x73, 0x72,
-	0x32, 0xf3, 0xd2, 0x21, 0x5c, 0x25, 0x5d, 0x2e, 0x5e, 0xbf, 0xfc, 0x92, 0xcc, 0xe4, 0xd4, 0x90,
-	0xa2, 0xcc, 0x82, 0xa0, 0xd4, 0x42, 0x21, 0x19, 0x2e, 0x16, 0x90, 0x6a, 0x09, 0x46, 0x05, 0x46,
-	0x0d, 0x6e, 0x23, 0x0e, 0xbd, 0x82, 0x24, 0x3d, 0xb0, 0x14, 0x58, 0x54, 0xc9, 0x8a, 0x8b, 0x0f,
-	0x59, 0x79, 0x71, 0x81, 0x90, 0x18, 0x17, 0x5b, 0x71, 0x49, 0x62, 0x49, 0x69, 0x31, 0x58, 0x07,
-	0x47, 0x10, 0x94, 0x27, 0x24, 0xc0, 0xc5, 0x9c, 0x5b, 0x9c, 0x2e, 0xc1, 0xa4, 0xc0, 0xa8, 0xc1,
-	0x19, 0x04, 0x62, 0x22, 0xac, 0x72, 0xca, 0xcc, 0xc9, 0x81, 0x5a, 0x05, 0x72, 0x0c, 0xb2, 0x55,
-	0x60, 0x29, 0xb0, 0x28, 0xc2, 0x2a, 0x88, 0x72, 0x52, 0xac, 0x32, 0xaa, 0x84, 0x59, 0x15, 0x9c,
-	0x5a, 0x54, 0x96, 0x99, 0x9c, 0x2a, 0x64, 0xcc, 0xc5, 0x85, 0x70, 0xb7, 0x90, 0x20, 0xc8, 0x2a,
-	0x14, 0x6f, 0x4b, 0x09, 0xa1, 0x0b, 0x15, 0x17, 0x20, 0x34, 0x81, 0x5c, 0x80, 0xac, 0x09, 0xea,
-	0x01, 0x64, 0x4d, 0x30, 0x47, 0x26, 0xb1, 0x81, 0xc3, 0xd5, 0x18, 0x10, 0x00, 0x00, 0xff, 0xff,
-	0x4a, 0xec, 0xc6, 0x39, 0x8c, 0x01, 0x00, 0x00,
+	// 228 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x90, 0x3d, 0x4b, 0xc4, 0x40,
+	0x10, 0x86, 0xc9, 0x29, 0x41, 0xe7, 0xf0, 0x6b, 0x44, 0x39, 0xb6, 0xf1, 0x48, 0x75, 0x55, 0x8a,
+	0x53, 0x50, 0xb4, 0xb3, 0xd7, 0x62, 0xf1, 0x0f, 0xdc, 0x1e, 0x31, 0x0c, 0xac, 0xd9, 0x31, 0x3b,
+	0x57, 0x1c, 0xfe, 0x79, 0x99, 0x8d, 0x92, 0x25, 0x36, 0x76, 0xfb, 0xce, 0xcb, 0xc3, 0x33, 0xb3,
+	0x80, 0x5d, 0x10, 0x7a, 0xa7, 0xed, 0x46, 0x28, 0x74, 0x35, 0xf7, 0x41, 0x02, 0xce, 0xd8, 0x19,
+	0x90, 0x9e, 0x78, 0xc8, 0xe6, 0xc4, 0x91, 0xf7, 0xd4, 0xb5, 0x43, 0xac, 0xee, 0xe0, 0xe2, 0x35,
+	0x08, 0x6d, 0x9b, 0xb7, 0x9e, 0xd8, 0x36, 0x9f, 0xbb, 0x26, 0x0a, 0xde, 0xc0, 0xa1, 0x12, 0x8b,
+	0x62, 0x59, 0xac, 0xe6, 0xeb, 0x79, 0xcd, 0xae, 0xd6, 0xfa, 0x25, 0xb6, 0x36, 0x15, 0xd5, 0x23,
+	0x9c, 0xe6, 0x54, 0x64, 0xbc, 0x86, 0x32, 0xca, 0x46, 0x76, 0x31, 0x41, 0x47, 0xf6, 0x27, 0xe1,
+	0x39, 0x1c, 0x7c, 0xc4, 0x76, 0x31, 0x5b, 0x16, 0xab, 0x63, 0xab, 0xcf, 0xd1, 0xf8, 0x4c, 0xde,
+	0x67, 0x46, 0xdd, 0x2b, 0x37, 0x6a, 0x9d, 0x8c, 0x5a, 0x54, 0x4f, 0x70, 0x96, 0x53, 0xec, 0xf7,
+	0xff, 0x57, 0xae, 0xbf, 0xa0, 0x1c, 0x60, 0xbc, 0x07, 0x18, 0x17, 0xc7, 0x2b, 0xf5, 0xfc, 0x39,
+	0xdf, 0xe0, 0x74, 0x1c, 0x19, 0x1f, 0x7e, 0x41, 0xf5, 0xe7, 0x60, 0x76, 0x85, 0xb9, 0x9c, 0x8e,
+	0xd9, 0xef, 0x5d, 0x99, 0x3e, 0xfa, 0xf6, 0x3b, 0x00, 0x00, 0xff, 0xff, 0x89, 0x09, 0x6f, 0x6b,
+	0x9d, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -233,108 +234,108 @@ var _ grpc.ClientConnInterface
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion6
 
-// NoticeServiceClient is the client API for NoticeService service.
+// NoticeClient is the client API for Notice service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type NoticeServiceClient interface {
-	NoticeTrip(ctx context.Context, in *NoticeTripReq, opts ...grpc.CallOption) (*NoticeTripResp, error)
-	NoticeBill(ctx context.Context, in *NoticeBillReq, opts ...grpc.CallOption) (*NoticeBillResp, error)
+type NoticeClient interface {
+	NoticeTrip(ctx context.Context, in *NoticeTripRequest, opts ...grpc.CallOption) (*NoticeTripResp, error)
+	NoticeBill(ctx context.Context, in *NoticeBillRequest, opts ...grpc.CallOption) (*NoticeBillReply, error)
 }
 
-type noticeServiceClient struct {
+type noticeClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewNoticeServiceClient(cc grpc.ClientConnInterface) NoticeServiceClient {
-	return &noticeServiceClient{cc}
+func NewNoticeClient(cc grpc.ClientConnInterface) NoticeClient {
+	return &noticeClient{cc}
 }
 
-func (c *noticeServiceClient) NoticeTrip(ctx context.Context, in *NoticeTripReq, opts ...grpc.CallOption) (*NoticeTripResp, error) {
+func (c *noticeClient) NoticeTrip(ctx context.Context, in *NoticeTripRequest, opts ...grpc.CallOption) (*NoticeTripResp, error) {
 	out := new(NoticeTripResp)
-	err := c.cc.Invoke(ctx, "/pb.NoticeService/NoticeTrip", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pb.Notice/NoticeTrip", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *noticeServiceClient) NoticeBill(ctx context.Context, in *NoticeBillReq, opts ...grpc.CallOption) (*NoticeBillResp, error) {
-	out := new(NoticeBillResp)
-	err := c.cc.Invoke(ctx, "/pb.NoticeService/NoticeBill", in, out, opts...)
+func (c *noticeClient) NoticeBill(ctx context.Context, in *NoticeBillRequest, opts ...grpc.CallOption) (*NoticeBillReply, error) {
+	out := new(NoticeBillReply)
+	err := c.cc.Invoke(ctx, "/pb.Notice/NoticeBill", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// NoticeServiceServer is the server API for NoticeService service.
-type NoticeServiceServer interface {
-	NoticeTrip(context.Context, *NoticeTripReq) (*NoticeTripResp, error)
-	NoticeBill(context.Context, *NoticeBillReq) (*NoticeBillResp, error)
+// NoticeServer is the server API for Notice service.
+type NoticeServer interface {
+	NoticeTrip(context.Context, *NoticeTripRequest) (*NoticeTripResp, error)
+	NoticeBill(context.Context, *NoticeBillRequest) (*NoticeBillReply, error)
 }
 
-// UnimplementedNoticeServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedNoticeServiceServer struct {
+// UnimplementedNoticeServer can be embedded to have forward compatible implementations.
+type UnimplementedNoticeServer struct {
 }
 
-func (*UnimplementedNoticeServiceServer) NoticeTrip(ctx context.Context, req *NoticeTripReq) (*NoticeTripResp, error) {
+func (*UnimplementedNoticeServer) NoticeTrip(ctx context.Context, req *NoticeTripRequest) (*NoticeTripResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NoticeTrip not implemented")
 }
-func (*UnimplementedNoticeServiceServer) NoticeBill(ctx context.Context, req *NoticeBillReq) (*NoticeBillResp, error) {
+func (*UnimplementedNoticeServer) NoticeBill(ctx context.Context, req *NoticeBillRequest) (*NoticeBillReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NoticeBill not implemented")
 }
 
-func RegisterNoticeServiceServer(s *grpc.Server, srv NoticeServiceServer) {
-	s.RegisterService(&_NoticeService_serviceDesc, srv)
+func RegisterNoticeServer(s *grpc.Server, srv NoticeServer) {
+	s.RegisterService(&_Notice_serviceDesc, srv)
 }
 
-func _NoticeService_NoticeTrip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NoticeTripReq)
+func _Notice_NoticeTrip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NoticeTripRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NoticeServiceServer).NoticeTrip(ctx, in)
+		return srv.(NoticeServer).NoticeTrip(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.NoticeService/NoticeTrip",
+		FullMethod: "/pb.Notice/NoticeTrip",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NoticeServiceServer).NoticeTrip(ctx, req.(*NoticeTripReq))
+		return srv.(NoticeServer).NoticeTrip(ctx, req.(*NoticeTripRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NoticeService_NoticeBill_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NoticeBillReq)
+func _Notice_NoticeBill_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NoticeBillRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NoticeServiceServer).NoticeBill(ctx, in)
+		return srv.(NoticeServer).NoticeBill(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.NoticeService/NoticeBill",
+		FullMethod: "/pb.Notice/NoticeBill",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NoticeServiceServer).NoticeBill(ctx, req.(*NoticeBillReq))
+		return srv.(NoticeServer).NoticeBill(ctx, req.(*NoticeBillRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _NoticeService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.NoticeService",
-	HandlerType: (*NoticeServiceServer)(nil),
+var _Notice_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "pb.Notice",
+	HandlerType: (*NoticeServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "NoticeTrip",
-			Handler:    _NoticeService_NoticeTrip_Handler,
+			Handler:    _Notice_NoticeTrip_Handler,
 		},
 		{
 			MethodName: "NoticeBill",
-			Handler:    _NoticeService_NoticeBill_Handler,
+			Handler:    _Notice_NoticeBill_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

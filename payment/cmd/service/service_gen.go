@@ -33,7 +33,7 @@ func defaultGRPCOptions(logger log.Logger, tracer opentracinggo.Tracer) map[stri
 	return options
 }
 func addEndpointMiddlewareToAllMethods(mw map[string][]endpoint1.Middleware, m endpoint1.Middleware) {
-	methods := []string{"Pay", "DiscoverService", "HealthCheck"}
+	methods := []string{"Pay"}
 	for _, v := range methods {
 		mw[v] = append(mw[v], m)
 	}

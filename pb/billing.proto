@@ -20,7 +20,7 @@ message Bill {
 }
 
 message GenBillReq {
-  Trip trip = 1;
+  TripMsg trip_msg = 1;
 }
 
 message GenBillResp {

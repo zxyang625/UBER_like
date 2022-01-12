@@ -37,10 +37,6 @@ var fs = flag.NewFlagSet("Payment", flag.ExitOnError)
 var debugAddr = fs.String("debug-addr", ":8080", "Debug and metrics listen address")
 var httpAddr = fs.String("http-addr", ":8081", "HTTP listen address")
 var grpcAddr = fs.String("grpc-addr", ":8082", "gRPC listen address")
-var thriftAddr = fs.String("thrift-addr", ":8083", "Thrift listen address")
-var thriftProtocol = fs.String("thrift-protocol", "binary", "binary, compact, json, simplejson")
-var thriftBuffer = fs.Int("thrift-buffer", 0, "0 for unbuffered")
-var thriftFramed = fs.Bool("thrift-framed", false, "true to enable framing")
 var zipkinURL = fs.String("zipkin-url", tracing.DefaultZipkinURL, "Enable Zipkin tracing via a collector URL e.g. http://localhost:9411/api/v1/spans")
 var serviceName = fs.String("service-name", "Payment", "default service name")
 var consulAddr = fs.String("consul-addr", "127.0.0.1", "consul listen addr")
@@ -72,6 +68,7 @@ func Run() {
 	ss := strings.Split(*grpcAddr, ":")
 	num, _ := strconv.Atoi(ss[1])
 	instanceID, ok := discoverClient.Register(*serviceName, "", "127.0.0.1", num, nil, logger)
+	defer discoverClient.DeRegister(instanceID, logger)
 	if !ok {
 		log.Printf("service %s register failed", *serviceName)
 		os.Exit(-1)
@@ -83,7 +80,6 @@ func Run() {
 	initMetricsEndpoint(g)
 	initCancelInterrupt(g)
 	logger.Log("exit", g.Run())
-	discoverClient.DeRegister(instanceID, logger)
 }
 func initHttpHandler(endpoints endpoint.Endpoints, g *group.Group) {
 	options := defaultHttpOptions(logger, tracer)
@@ -111,8 +107,8 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]kitendpoint.Mi
 	mw = map[string][]kitendpoint.Middleware{
 		"Pay": {
 			endpoint.LoggingMiddleware(logger),
-			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodName, "pay histogram")),
-			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodName, "pay count")),
+			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodPay, "pay histogram")),
+			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodPay, "pay count")),
 		},
 	}
 

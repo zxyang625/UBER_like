@@ -11,8 +11,6 @@ import (
 // single parameter.
 type Endpoints struct {
 	PayEndpoint             endpoint.Endpoint
-	DiscoverServiceEndpoint endpoint.Endpoint
-	HealthCheckEndpoint     endpoint.Endpoint
 }
 
 // New returns a Endpoints struct that wraps the provided service, and wires in all of the
@@ -23,9 +21,6 @@ func New(s service.PaymentService, mdw map[string][]endpoint.Middleware) Endpoin
 	}
 	for _, m := range mdw["Pay"] {
 		eps.PayEndpoint = m(eps.PayEndpoint)
-	}
-	for _, m := range mdw["DiscoverService"] {
-		eps.DiscoverServiceEndpoint = m(eps.DiscoverServiceEndpoint)
 	}
 	return eps
 }

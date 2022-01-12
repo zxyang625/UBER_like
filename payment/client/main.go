@@ -19,9 +19,13 @@ import (
 func main() {
 	{	//discover
 		discoverclient, err := discover.NewDiscoverClient("127.0.0.1", 8500, true)
+		if err != nil {
+			log.Printf("1, err: %v\n", err)
+			return
+		}
 		instances, err := discoverclient.DiscoverServices("Payment", "", true)
 		if err != nil {
-			log.Println(err)
+			log.Printf("2, err: %v\n", err)
 			return
 		}
 		fmt.Println(discover.GetInstance(instances))
@@ -45,12 +49,14 @@ func main() {
 		parentSpan := zkTracer.StartSpan("Pay")
 		defer parentSpan.Finish()
 		ctx := zipkingo.NewContext(context.Background(), parentSpan)
-		res, err := conn.Pay(ctx, 9999, 9999, "253rfe64tgrw")
-		if err != nil {
-			log.Printf("conn Pay failed, err: %v", err)
-			return
+		for i := 0; i < 100; i++ {
+			res, err := conn.Pay(ctx, 9999, 9999, "253rfe64tgrw")
+			if err != nil {
+				log.Printf("conn Pay failed, err: %v", err)
+				return
+			}
+			fmt.Println(res)
 		}
-		fmt.Println(res)
 	}
 	{ //grpc
 		reporter := http.NewReporter(tracing.DefaultZipkinURL)
@@ -78,8 +84,6 @@ func main() {
 		defer parentSpan.Finish()
 		ctx := zipkingo.NewContext(context.Background(), parentSpan)
 		for i := 0; i < 100; i++ {
-			//span := zipkingo.SpanFromContext(ctx)
-			//ctx1 := zipkingo.NewContext(context.Background(), span)
 			r2, _ := svc2.Pay(ctx, 3124, 1514, "34rfey345re")
 			fmt.Println(r2)
 		}

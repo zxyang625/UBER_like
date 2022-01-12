@@ -1,131 +1,135 @@
 package service
 
 import (
-	"context"
 	"flag"
 	"fmt"
+	"google.golang.org/grpc/health/grpc_health_v1"
+	"log"
 	"net"
-	http1 "net/http"
+	http2 "net/http"
 	"os"
 	"os/signal"
+	"passenger/config"
 	endpoint "passenger/pkg/endpoint"
 	grpc "passenger/pkg/grpc"
 	pb "passenger/pkg/grpc/pb"
-	http2 "passenger/pkg/http"
+	http1 "passenger/pkg/http"
 	service "passenger/pkg/service"
+	"pkg/discover"
+	"pkg/promtheus"
+	"pkg/tracing"
+	"strconv"
+	"strings"
 	"syscall"
 
 	endpoint1 "github.com/go-kit/kit/endpoint"
-	log "github.com/go-kit/kit/log"
-	lightsteptracergo "github.com/lightstep/lightstep-tracer-go"
+	kitlog "github.com/go-kit/kit/log"
 	group "github.com/oklog/oklog/pkg/group"
 	opentracinggo "github.com/opentracing/opentracing-go"
-	zipkingoopentracing "github.com/openzipkin-contrib/zipkin-go-opentracing"
-	zipkingo "github.com/openzipkin/zipkin-go"
-	http "github.com/openzipkin/zipkin-go/reporter/http"
 	promhttp "github.com/prometheus/client_golang/prometheus/promhttp"
 	grpc1 "google.golang.org/grpc"
-	appdash "sourcegraph.com/sourcegraph/appdash"
-	opentracing "sourcegraph.com/sourcegraph/appdash/opentracing"
 )
 
 var tracer opentracinggo.Tracer
-var logger log.Logger
+var logger kitlog.Logger
 
 var fs = flag.NewFlagSet("passenger", flag.ExitOnError)
 var debugAddr = fs.String("debug-addr", ":8080", "Debug and metrics listen address")
 var httpAddr = fs.String("http-addr", ":8081", "HTTP listen address")
 var grpcAddr = fs.String("grpc-addr", ":8082", "gRPC listen address")
-var thriftAddr = fs.String("thrift-addr", ":8083", "Thrift listen address")
-var thriftProtocol = fs.String("thrift-protocol", "binary", "binary, compact, json, simplejson")
-var thriftBuffer = fs.Int("thrift-buffer", 0, "0 for unbuffered")
-var thriftFramed = fs.Bool("thrift-framed", false, "true to enable framing")
-var zipkinURL = fs.String("zipkin-url", "", "Enable Zipkin tracing via a collector URL e.g. http://localhost:9411/api/v1/spans")
-var lightstepToken = fs.String("lightstep-token", "", "Enable LightStep tracing via a LightStep access token")
-var appdashAddr = fs.String("appdash-addr", "", "Enable Appdash tracing via an Appdash server host:port")
+var zipkinURL = fs.String("zipkin-url", tracing.DefaultZipkinURL, "Enable Zipkin tracing via a collector URL e.g. http://localhost:9411/api/v1/spans")
+var serviceName = fs.String("service-name", "Passenger", "default service name")
+var consulAddr = fs.String("consul-addr", "127.0.0.1", "consul listen addr")
+var consulPort = fs.Int("consul-port", 8500, "consul list port")
 
 func Run() {
 	fs.Parse(os.Args[1:])
 
-	logger = log.NewLogfmtLogger(os.Stderr)
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
-	logger = log.With(logger, "caller", log.DefaultCaller)
+	logger = config.GetKitLogger()
 
 	if *zipkinURL != "" {
 		logger.Log("tracer", "Zipkin", "URL", *zipkinURL)
-		reporter := http.NewReporter(*zipkinURL)
-		defer reporter.Close()
-		endpoint, err := zipkingo.NewEndpoint("passenger", "localhost:80")
+		tracingImpl, err := tracing.NewOpenTracingTracer(*serviceName)
 		if err != nil {
-			logger.Log("err", err)
-			os.Exit(1)
+			logger.Log("new zipkin tracer", "failed")
+			os.Exit(-1)
 		}
-		localEndpoint := zipkingo.WithLocalEndpoint(endpoint)
-		nativeTracer, err := zipkingo.NewTracer(reporter, localEndpoint)
-		if err != nil {
-			logger.Log("err", err)
-			os.Exit(1)
-		}
-		tracer = zipkingoopentracing.Wrap(nativeTracer)
-	} else if *lightstepToken != "" {
-		logger.Log("tracer", "LightStep")
-		tracer = lightsteptracergo.NewTracer(lightsteptracergo.Options{AccessToken: *lightstepToken})
-		defer lightsteptracergo.Flush(context.Background(), tracer)
-	} else if *appdashAddr != "" {
-		logger.Log("tracer", "Appdash", "addr", *appdashAddr)
-		collector := appdash.NewRemoteCollector(*appdashAddr)
-		tracer = opentracing.NewTracer(collector)
-		defer collector.Close()
+		tracer = tracingImpl.Tracer
+		defer tracingImpl.Reporter.Close()
 	} else {
 		logger.Log("tracer", "none")
 		tracer = opentracinggo.GlobalTracer()
 	}
 
+	/////////////////////////////////////
+	discoverClient, err := discover.NewDiscoverClient(*consulAddr, *consulPort, true)
+	if err != nil {
+		logger.Log("NewDiscoverClient failed", err)
+	}
+	ss := strings.Split(*grpcAddr, ":")
+	num, _ := strconv.Atoi(ss[1])
+	instanceID, ok := discoverClient.Register(*serviceName, "", "127.0.0.1", num, nil, logger)
+	defer discoverClient.DeRegister(instanceID, logger)
+	if !ok {
+		log.Printf("service %s register failed", *serviceName)
+		os.Exit(-1)
+	}
+	//////////////////////////////////////////////////////////
 	svc := service.New(getServiceMiddleware(logger))
 	eps := endpoint.New(svc, getEndpointMiddleware(logger))
 	g := createService(eps)
 	initMetricsEndpoint(g)
 	initCancelInterrupt(g)
 	logger.Log("exit", g.Run())
-
 }
-func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
-	options := defaultGRPCOptions(logger, tracer)
+func initHttpHandler(endpoints endpoint.Endpoints, g *group.Group) {
+	options := defaultHttpOptions(logger, tracer)
 
-	grpcServer := grpc.NewGRPCServer(endpoints, options)
-	grpcListener, err := net.Listen("tcp", *grpcAddr)
+	httpHandler := http1.NewHTTPHandler(endpoints, options)
+	httpListener, err := net.Listen("tcp", *httpAddr)
 	if err != nil {
-		logger.Log("transport", "gRPC", "during", "Listen", "err", err)
+		logger.Log("transport", "HTTP", "during", "Listen", "err", err)
 	}
 	g.Add(func() error {
-		logger.Log("transport", "gRPC", "addr", *grpcAddr)
-		baseServer := grpc1.NewServer()
-		pb.RegisterPassengerServer(baseServer, grpcServer)
-		return baseServer.Serve(grpcListener)
+		logger.Log("transport", "HTTP", "addr", *httpAddr)
+		return http2.Serve(httpListener, httpHandler)
 	}, func(error) {
-		grpcListener.Close()
+		httpListener.Close()
 	})
 
 }
-func getServiceMiddleware(logger log.Logger) (mw []service.Middleware) {
-	mw = []service.Middleware{}
+func getServiceMiddleware(logger kitlog.Logger) (mw []service.Middleware) {
+	mw = []service.Middleware{
+		service.LoggingMiddleware(logger),
+	}
 
 	return
 }
-func getEndpointMiddleware(logger log.Logger) (mw map[string][]endpoint1.Middleware) {
-	mw = map[string][]endpoint1.Middleware{}
+func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Middleware) {
+	mw = map[string][]endpoint1.Middleware{
+		"GetPassengerInfo": {
+			endpoint.LoggingMiddleware(logger),
+			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGetPassengerInfo, "GetPassengerInfo histogram")),
+			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGetPassengerInfo, "GetPassengerInfo count")),
+		},
+		"PublishOrder": {
+			endpoint.LoggingMiddleware(logger),
+			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodPublishOrder, "PublishOrder histogram")),
+			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodPublishOrder, "PublishOrder count")),
+		},
+	}
 
 	return
 }
 func initMetricsEndpoint(g *group.Group) {
-	http1.DefaultServeMux.Handle("/metrics", promhttp.Handler())
+	http2.DefaultServeMux.Handle("/metrics", promhttp.Handler())
 	debugListener, err := net.Listen("tcp", *debugAddr)
 	if err != nil {
 		logger.Log("transport", "debug/HTTP", "during", "Listen", "err", err)
 	}
 	g.Add(func() error {
 		logger.Log("transport", "debug/HTTP", "addr", *debugAddr)
-		return http1.Serve(debugListener, http1.DefaultServeMux)
+		return http2.Serve(debugListener, http2.DefaultServeMux)
 	}, func(error) {
 		debugListener.Close()
 	})
@@ -146,19 +150,22 @@ func initCancelInterrupt(g *group.Group) {
 	})
 }
 
-func initHttpHandler(endpoints endpoint.Endpoints, g *group.Group) {
-	options := defaultHttpOptions(logger, tracer)
+func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
+	options := defaultGRPCOptions(logger, tracer)
 
-	httpHandler := http2.NewHTTPHandler(endpoints, options)
-	httpListener, err := net.Listen("tcp", *httpAddr)
+	grpcServer := grpc.NewGRPCServer(endpoints, options)
+	grpcListener, err := net.Listen("tcp", *grpcAddr)
 	if err != nil {
-		logger.Log("transport", "HTTP", "during", "Listen", "err", err)
+		logger.Log("transport", "gRPC", "during", "Listen", "err", err)
 	}
 	g.Add(func() error {
-		logger.Log("transport", "HTTP", "addr", *httpAddr)
-		return http1.Serve(httpListener, httpHandler)
+		logger.Log("transport", "gRPC", "addr", *grpcAddr)
+		baseServer := grpc1.NewServer()
+		pb.RegisterPassengerServer(baseServer, grpcServer)
+		grpc_health_v1.RegisterHealthServer(baseServer, &discover.HealthImpl{})
+		return baseServer.Serve(grpcListener)
 	}, func(error) {
-		httpListener.Close()
+		grpcListener.Close()
 	})
 
 }

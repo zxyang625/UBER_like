@@ -24,7 +24,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type PayReq struct {
+type PayRequest struct {
 	BillNum              int64    `protobuf:"varint,1,opt,name=bill_num,json=billNum,proto3" json:"bill_num,omitempty"`
 	AccountNum           int64    `protobuf:"varint,2,opt,name=account_num,json=accountNum,proto3" json:"account_num,omitempty"`
 	PayPassword          string   `protobuf:"bytes,3,opt,name=pay_password,json=payPassword,proto3" json:"pay_password,omitempty"`
@@ -33,53 +33,53 @@ type PayReq struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *PayReq) Reset()         { *m = PayReq{} }
-func (m *PayReq) String() string { return proto.CompactTextString(m) }
-func (*PayReq) ProtoMessage()    {}
-func (*PayReq) Descriptor() ([]byte, []int) {
+func (m *PayRequest) Reset()         { *m = PayRequest{} }
+func (m *PayRequest) String() string { return proto.CompactTextString(m) }
+func (*PayRequest) ProtoMessage()    {}
+func (*PayRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_6362648dfa63d410, []int{0}
 }
 
-func (m *PayReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PayReq.Unmarshal(m, b)
+func (m *PayRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PayRequest.Unmarshal(m, b)
 }
-func (m *PayReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PayReq.Marshal(b, m, deterministic)
+func (m *PayRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PayRequest.Marshal(b, m, deterministic)
 }
-func (m *PayReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PayReq.Merge(m, src)
+func (m *PayRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PayRequest.Merge(m, src)
 }
-func (m *PayReq) XXX_Size() int {
-	return xxx_messageInfo_PayReq.Size(m)
+func (m *PayRequest) XXX_Size() int {
+	return xxx_messageInfo_PayRequest.Size(m)
 }
-func (m *PayReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_PayReq.DiscardUnknown(m)
+func (m *PayRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_PayRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_PayReq proto.InternalMessageInfo
+var xxx_messageInfo_PayRequest proto.InternalMessageInfo
 
-func (m *PayReq) GetBillNum() int64 {
+func (m *PayRequest) GetBillNum() int64 {
 	if m != nil {
 		return m.BillNum
 	}
 	return 0
 }
 
-func (m *PayReq) GetAccountNum() int64 {
+func (m *PayRequest) GetAccountNum() int64 {
 	if m != nil {
 		return m.AccountNum
 	}
 	return 0
 }
 
-func (m *PayReq) GetPayPassword() string {
+func (m *PayRequest) GetPayPassword() string {
 	if m != nil {
 		return m.PayPassword
 	}
 	return ""
 }
 
-type PayResp struct {
+type PayReply struct {
 	Status               bool     `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
 	Msg                  string   `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -87,39 +87,39 @@ type PayResp struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *PayResp) Reset()         { *m = PayResp{} }
-func (m *PayResp) String() string { return proto.CompactTextString(m) }
-func (*PayResp) ProtoMessage()    {}
-func (*PayResp) Descriptor() ([]byte, []int) {
+func (m *PayReply) Reset()         { *m = PayReply{} }
+func (m *PayReply) String() string { return proto.CompactTextString(m) }
+func (*PayReply) ProtoMessage()    {}
+func (*PayReply) Descriptor() ([]byte, []int) {
 	return fileDescriptor_6362648dfa63d410, []int{1}
 }
 
-func (m *PayResp) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PayResp.Unmarshal(m, b)
+func (m *PayReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PayReply.Unmarshal(m, b)
 }
-func (m *PayResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PayResp.Marshal(b, m, deterministic)
+func (m *PayReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PayReply.Marshal(b, m, deterministic)
 }
-func (m *PayResp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PayResp.Merge(m, src)
+func (m *PayReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PayReply.Merge(m, src)
 }
-func (m *PayResp) XXX_Size() int {
-	return xxx_messageInfo_PayResp.Size(m)
+func (m *PayReply) XXX_Size() int {
+	return xxx_messageInfo_PayReply.Size(m)
 }
-func (m *PayResp) XXX_DiscardUnknown() {
-	xxx_messageInfo_PayResp.DiscardUnknown(m)
+func (m *PayReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_PayReply.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_PayResp proto.InternalMessageInfo
+var xxx_messageInfo_PayReply proto.InternalMessageInfo
 
-func (m *PayResp) GetStatus() bool {
+func (m *PayReply) GetStatus() bool {
 	if m != nil {
 		return m.Status
 	}
 	return false
 }
 
-func (m *PayResp) GetMsg() string {
+func (m *PayReply) GetMsg() string {
 	if m != nil {
 		return m.Msg
 	}
@@ -127,8 +127,8 @@ func (m *PayResp) GetMsg() string {
 }
 
 func init() {
-	proto.RegisterType((*PayReq)(nil), "pb.PayReq")
-	proto.RegisterType((*PayResp)(nil), "pb.PayResp")
+	proto.RegisterType((*PayRequest)(nil), "pb.PayRequest")
+	proto.RegisterType((*PayReply)(nil), "pb.PayReply")
 }
 
 func init() {
@@ -136,20 +136,20 @@ func init() {
 }
 
 var fileDescriptor_6362648dfa63d410 = []byte{
-	// 201 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x3c, 0x4f, 0x4b, 0x6a, 0x85, 0x30,
-	0x14, 0x45, 0x05, 0x3f, 0xd7, 0xb6, 0x94, 0x0c, 0x8a, 0xed, 0xa4, 0xd6, 0x91, 0x23, 0x07, 0xb5,
-	0x2b, 0xe8, 0x02, 0x8a, 0xa4, 0x0b, 0x90, 0xc4, 0x06, 0x11, 0x12, 0x73, 0x6b, 0x92, 0xf7, 0xc8,
-	0xee, 0x1f, 0x46, 0x79, 0xb3, 0xf3, 0xb9, 0x9c, 0x73, 0x2e, 0x3c, 0x22, 0xf3, 0x4a, 0xac, 0xb6,
-	0xc3, 0x4d, 0x5b, 0x4d, 0x62, 0xe4, 0xcd, 0x0c, 0xe9, 0xc0, 0x3c, 0x15, 0xff, 0xe4, 0x15, 0x72,
-	0xbe, 0x48, 0x39, 0xae, 0x4e, 0x55, 0x51, 0x1d, 0xb5, 0x09, 0xcd, 0x76, 0xfe, 0xe3, 0x14, 0x79,
-	0x87, 0x92, 0x4d, 0x93, 0x76, 0xab, 0x0d, 0x6e, 0x1c, 0x5c, 0x38, 0xa5, 0xfd, 0xe0, 0x03, 0x1e,
-	0x90, 0xf9, 0x11, 0x99, 0x31, 0x57, 0xbd, 0xfd, 0x55, 0x49, 0x1d, 0xb5, 0x05, 0x2d, 0x91, 0xf9,
-	0xe1, 0x94, 0x9a, 0x1e, 0xb2, 0x50, 0x64, 0x90, 0xbc, 0x40, 0x6a, 0x2c, 0xb3, 0xce, 0x84, 0x9e,
-	0x9c, 0x9e, 0x8c, 0x3c, 0x43, 0xa2, 0xcc, 0x1c, 0xe2, 0x0b, 0xba, 0xc3, 0xcf, 0x2f, 0x78, 0x1a,
-	0x8e, 0xc9, 0xbf, 0x62, 0xbb, 0x2c, 0x93, 0x20, 0x4d, 0x88, 0xf9, 0x5e, 0xa4, 0x24, 0xd0, 0x21,
-	0xef, 0x8e, 0xf1, 0x6f, 0xe5, 0x1d, 0x1b, 0xe4, 0x69, 0x78, 0xaf, 0xbf, 0x05, 0x00, 0x00, 0xff,
-	0xff, 0x81, 0x13, 0xd1, 0x05, 0xef, 0x00, 0x00, 0x00,
+	// 198 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x44, 0x8f, 0xc1, 0x4e, 0x86, 0x30,
+	0x10, 0x84, 0xc3, 0xdf, 0xe4, 0x07, 0x16, 0x34, 0xa6, 0x07, 0x83, 0x5e, 0x44, 0xbc, 0x70, 0xea,
+	0x41, 0x7d, 0x0e, 0xd3, 0xf4, 0x05, 0xc8, 0x16, 0x89, 0x31, 0xb6, 0x74, 0xa5, 0x6d, 0x4c, 0xdf,
+	0xde, 0x50, 0x89, 0xff, 0x6d, 0xbf, 0x99, 0xcd, 0xce, 0x2c, 0x5c, 0x11, 0x26, 0xbb, 0xac, 0x41,
+	0xd0, 0xe6, 0x82, 0xe3, 0x27, 0xd2, 0xc3, 0x17, 0x80, 0xc4, 0xa4, 0x96, 0xef, 0xb8, 0xf8, 0xc0,
+	0xef, 0xa0, 0xd2, 0x9f, 0xc6, 0x4c, 0x6b, 0xb4, 0x5d, 0xd1, 0x17, 0x23, 0x53, 0xe5, 0xce, 0x6f,
+	0xd1, 0xf2, 0x07, 0x68, 0x70, 0x9e, 0x5d, 0x5c, 0x43, 0x76, 0x4f, 0xd9, 0x85, 0x43, 0xda, 0x17,
+	0x1e, 0xa1, 0x25, 0x4c, 0x13, 0xa1, 0xf7, 0x3f, 0x6e, 0x7b, 0xef, 0x58, 0x5f, 0x8c, 0xb5, 0x6a,
+	0x08, 0x93, 0x3c, 0xa4, 0xe1, 0x15, 0xaa, 0x1c, 0x46, 0x26, 0xf1, 0x5b, 0x38, 0xfb, 0x80, 0x21,
+	0xfa, 0x1c, 0x54, 0xa9, 0x83, 0xf8, 0x0d, 0x30, 0xeb, 0x3f, 0xf2, 0xfd, 0x5a, 0xed, 0xe3, 0xb3,
+	0x80, 0x52, 0xfe, 0xf5, 0xe6, 0x4f, 0xc0, 0x24, 0x26, 0x7e, 0x2d, 0x48, 0x8b, 0x4b, 0xed, 0xfb,
+	0xf6, 0x9f, 0xc9, 0x24, 0x7d, 0xce, 0xdf, 0xbd, 0xfc, 0x06, 0x00, 0x00, 0xff, 0xff, 0x2c, 0x94,
+	0x5d, 0x0d, 0xee, 0x00, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -160,72 +160,72 @@ var _ grpc.ClientConnInterface
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion6
 
-// PaymentServiceClient is the client API for PaymentService service.
+// PaymentClient is the client API for Payment service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type PaymentServiceClient interface {
-	PayBill(ctx context.Context, in *PayReq, opts ...grpc.CallOption) (*PayResp, error)
+type PaymentClient interface {
+	Pay(ctx context.Context, in *PayRequest, opts ...grpc.CallOption) (*PayReply, error)
 }
 
-type paymentServiceClient struct {
+type paymentClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewPaymentServiceClient(cc grpc.ClientConnInterface) PaymentServiceClient {
-	return &paymentServiceClient{cc}
+func NewPaymentClient(cc grpc.ClientConnInterface) PaymentClient {
+	return &paymentClient{cc}
 }
 
-func (c *paymentServiceClient) PayBill(ctx context.Context, in *PayReq, opts ...grpc.CallOption) (*PayResp, error) {
-	out := new(PayResp)
-	err := c.cc.Invoke(ctx, "/pb.PaymentService/PayBill", in, out, opts...)
+func (c *paymentClient) Pay(ctx context.Context, in *PayRequest, opts ...grpc.CallOption) (*PayReply, error) {
+	out := new(PayReply)
+	err := c.cc.Invoke(ctx, "/pb.Payment/Pay", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// PaymentServiceServer is the server API for PaymentService service.
-type PaymentServiceServer interface {
-	PayBill(context.Context, *PayReq) (*PayResp, error)
+// PaymentServer is the server API for Payment service.
+type PaymentServer interface {
+	Pay(context.Context, *PayRequest) (*PayReply, error)
 }
 
-// UnimplementedPaymentServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedPaymentServiceServer struct {
+// UnimplementedPaymentServer can be embedded to have forward compatible implementations.
+type UnimplementedPaymentServer struct {
 }
 
-func (*UnimplementedPaymentServiceServer) PayBill(ctx context.Context, req *PayReq) (*PayResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PayBill not implemented")
+func (*UnimplementedPaymentServer) Pay(ctx context.Context, req *PayRequest) (*PayReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Pay not implemented")
 }
 
-func RegisterPaymentServiceServer(s *grpc.Server, srv PaymentServiceServer) {
-	s.RegisterService(&_PaymentService_serviceDesc, srv)
+func RegisterPaymentServer(s *grpc.Server, srv PaymentServer) {
+	s.RegisterService(&_Payment_serviceDesc, srv)
 }
 
-func _PaymentService_PayBill_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PayReq)
+func _Payment_Pay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PayRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PaymentServiceServer).PayBill(ctx, in)
+		return srv.(PaymentServer).Pay(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.PaymentService/PayBill",
+		FullMethod: "/pb.Payment/Pay",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PaymentServiceServer).PayBill(ctx, req.(*PayReq))
+		return srv.(PaymentServer).Pay(ctx, req.(*PayRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _PaymentService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.PaymentService",
-	HandlerType: (*PaymentServiceServer)(nil),
+var _Payment_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "pb.Payment",
+	HandlerType: (*PaymentServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "PayBill",
-			Handler:    _PaymentService_PayBill_Handler,
+			MethodName: "Pay",
+			Handler:    _Payment_Pay_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

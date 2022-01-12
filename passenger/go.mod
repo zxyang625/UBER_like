@@ -16,4 +16,7 @@ require (
 	golang.org/x/net v0.0.0-20220107192237-5cfca573fb4d
 	google.golang.org/grpc v1.43.0
 	sourcegraph.com/sourcegraph/appdash v0.0.0-20211028080628-e2786a622600
+	pkg v0.0.0
 )
+
+replace pkg => ../pkg

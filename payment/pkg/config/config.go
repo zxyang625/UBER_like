@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	System = "Payment"
-    MethodName = "Pay"
+	System    = "Payment"
+    MethodPay = "Pay"
 )
 
 var Logger *log.Logger
