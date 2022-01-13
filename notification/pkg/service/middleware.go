@@ -26,7 +26,14 @@ func LoggingMiddleware(logger log.Logger) Middleware {
 
 func (l loggingMiddleware) NoticeTrip(ctx context.Context, req *pb.NoticeTripRequest) (resp *pb.NoticeTripReply, err error) {
 	defer func() {
-		l.logger.Log("method", "NoticeTrip", "req", req, "resp", resp, "err", err)
+		l.logger.Log("method", "NoticeTrip", "err", err)
 	}()
 	return l.next.NoticeTrip(ctx, req)
+}
+
+func (l loggingMiddleware) NoticeBill(ctx context.Context, req *pb.NoticeBillRequest) (resp *pb.NoticeBillReply, err error) {
+	defer func() {
+		l.logger.Log("method", "NoticeBill", "req", "err", err)
+	}()
+	return l.next.NoticeBill(ctx, req)
 }

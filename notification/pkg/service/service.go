@@ -8,7 +8,7 @@ import (
 // NotificationService describes the service.
 type NotificationService interface {
 	NoticeTrip(ctx context.Context, req *pb.NoticeTripRequest) (resp *pb.NoticeTripReply, err error)
-	//NoticeBill(ctx context.Context, req *no.NoticeBillRequest) (resp *no.NoticeBillReply, err error)
+	NoticeBill(ctx context.Context, req *pb.NoticeBillRequest) (resp *pb.NoticeBillReply, err error)
 }
 
 type basicNotificationService struct{}
@@ -17,6 +17,13 @@ func (b *basicNotificationService) NoticeTrip(ctx context.Context, req *pb.Notic
 	return &pb.NoticeTripReply{
 		Status: true,
 		Msg:    "success" + req.GetTripMsg().GetPassengerName() + req.GetTripMsg().GetCar(),
+	}, nil
+}
+
+func (b *basicNotificationService) NoticeBill(ctx context.Context, req *pb.NoticeBillRequest) (resp *pb.NoticeBillReply, err error) {
+	return &pb.NoticeBillReply{
+		Status: true,
+		Msg:    "success" + req.GetBillMsg().GetPassengerName() + req.GetBillMsg().GetDriverName(),
 	}, nil
 }
 

@@ -10,8 +10,12 @@ import (
 // NewGRPCServer makes a set of endpoints available as a gRPC AddServer
 type grpcServer struct {
 	noticeTrip grpc.Handler
+	noticeBill grpc.Handler
 }
 
 func NewGRPCServer(endpoints endpoint.Endpoints, options map[string][]grpc.ServerOption) pb.NotificationServer {
-	return &grpcServer{noticeTrip: makeNoticeTripHandler(endpoints, options["NoticeTrip"])}
+	return &grpcServer{
+		noticeBill: makeNoticeBillHandler(endpoints, options["NoticeBill"]),
+		noticeTrip: makeNoticeTripHandler(endpoints, options["NoticeTrip"]),
+	}
 }

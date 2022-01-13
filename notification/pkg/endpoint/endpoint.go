@@ -52,3 +52,41 @@ func (e Endpoints) NoticeTrip(ctx context.Context, req *pb.NoticeTripRequest) (r
 	}
 	return response.(NoticeTripResponse).Resp, response.(NoticeTripResponse).Err
 }
+
+// NoticeBillRequest collects the request parameters for the NoticeBill method.
+type NoticeBillRequest struct {
+	Req *pb.NoticeBillRequest `json:"req"`
+}
+
+// NoticeBillResponse collects the response parameters for the NoticeBill method.
+type NoticeBillResponse struct {
+	Resp *pb.NoticeBillReply `json:"resp"`
+	Err  error               `json:"err"`
+}
+
+// MakeNoticeBillEndpoint returns an endpoint that invokes NoticeBill on the service.
+func MakeNoticeBillEndpoint(s service.NotificationService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(NoticeBillRequest)
+		resp, err := s.NoticeBill(ctx, req.Req)
+		return NoticeBillResponse{
+			Err:  err,
+			Resp: resp,
+		}, nil
+	}
+}
+
+// Failed implements Failer.
+func (r NoticeBillResponse) Failed() error {
+	return r.Err
+}
+
+// NoticeBill implements Service. Primarily useful in a client.
+func (e Endpoints) NoticeBill(ctx context.Context, req *pb.NoticeBillRequest) (resp *pb.NoticeBillReply, err error) {
+	request := NoticeBillRequest{Req: req}
+	response, err := e.NoticeBillEndpoint(ctx, request)
+	if err != nil {
+		return
+	}
+	return response.(NoticeBillResponse).Resp, response.(NoticeBillResponse).Err
+}

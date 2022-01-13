@@ -21,7 +21,15 @@ func New(conn *grpc.ClientConn, options map[string][]grpc1.ClientOption) (servic
 		noticeTripEndpoint = grpc1.NewClient(conn, "pb.Notification", "NoticeTrip", encodeNoticeTripRequest, decodeNoticeTripResponse, pb.NoticeTripReply{}, options["NoticeTrip"]...).Endpoint()
 	}
 
-	return endpoint1.Endpoints{NoticeTripEndpoint: noticeTripEndpoint}, nil
+	var noticeBillEndpoint endpoint.Endpoint
+	{
+		noticeBillEndpoint = grpc1.NewClient(conn, "pb.Notification", "NoticeBill", encodeNoticeBillRequest, decodeNoticeBillResponse, pb.NoticeBillReply{}, options["NoticeBill"]...).Endpoint()
+	}
+
+	return endpoint1.Endpoints{
+		NoticeBillEndpoint: noticeBillEndpoint,
+		NoticeTripEndpoint: noticeTripEndpoint,
+	}, nil
 }
 
 // encodeNoticeTripRequest is a transport/grpc.EncodeRequestFunc that converts a
@@ -49,6 +57,38 @@ func decodeNoticeTripResponse(_ context.Context, reply interface{}) (interface{}
 		return nil, err
 	}
 	endResp := endpoint1.NoticeTripResponse{Resp: new(pb.NoticeTripReply)}
+	err = proto.Unmarshal(data, endResp.Resp)
+	if err != nil {
+		return nil, err
+	}
+	return endResp, nil
+}
+
+// encodeNoticeBillRequest is a transport/grpc.EncodeRequestFunc that converts a
+//  user-domain NoticeBill request to a gRPC request.
+func encodeNoticeBillRequest(_ context.Context, request interface{}) (interface{}, error) {
+	req := request.(endpoint1.NoticeBillRequest)
+	data, err := proto.Marshal(req.Req)
+	if err != nil {
+		return nil, err
+	}
+	pbReq := &pb.NoticeBillRequest{}
+	err = proto.Unmarshal(data, pbReq)
+	if err != nil {
+		return nil, err
+	}
+	return pbReq, nil
+}
+
+// decodeNoticeBillResponse is a transport/grpc.DecodeResponseFunc that converts
+// a gRPC concat reply to a user-domain concat response.
+func decodeNoticeBillResponse(_ context.Context, reply interface{}) (interface{}, error) {
+	resp := reply.(*pb.NoticeBillReply)
+	data, err := proto.Marshal(resp)
+	if err != nil {
+		return nil, err
+	}
+	endResp := endpoint1.NoticeBillResponse{Resp: new(pb.NoticeBillReply)}
 	err = proto.Unmarshal(data, endResp.Resp)
 	if err != nil {
 		return nil, err

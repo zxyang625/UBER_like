@@ -4,7 +4,6 @@ package service
 import (
 	endpoint1 "github.com/go-kit/kit/endpoint"
 	log "github.com/go-kit/kit/log"
-	prometheus "github.com/go-kit/kit/metrics/prometheus"
 	opentracing "github.com/go-kit/kit/tracing/opentracing"
 	grpc "github.com/go-kit/kit/transport/grpc"
 	http "github.com/go-kit/kit/transport/http"
@@ -21,18 +20,21 @@ func createService(endpoints endpoint.Endpoints) (g *group.Group) {
 	return g
 }
 func defaultHttpOptions(logger log.Logger, tracer opentracinggo.Tracer) map[string][]http.ServerOption {
-	options := map[string][]http.ServerOption{"NoticeTrip": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "NoticeTrip", logger))}}
+	options := map[string][]http.ServerOption{
+		"NoticeBill": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "NoticeBill", logger))},
+		"NoticeTrip": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "NoticeTrip", logger))},
+	}
 	return options
 }
 func defaultGRPCOptions(logger log.Logger, tracer opentracinggo.Tracer) map[string][]grpc.ServerOption {
-	options := map[string][]grpc.ServerOption{"NoticeTrip": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "NoticeTrip", logger))}}
+	options := map[string][]grpc.ServerOption{
+		"NoticeBill": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "NoticeBill", logger))},
+		"NoticeTrip": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "NoticeTrip", logger))},
+	}
 	return options
 }
-func addDefaultEndpointMiddleware(logger log.Logger, duration *prometheus.Summary, mw map[string][]endpoint1.Middleware) {
-	mw["NoticeTrip"] = []endpoint1.Middleware{endpoint.LoggingMiddleware(log.With(logger, "method", "NoticeTrip")), endpoint.InstrumentingMiddleware(duration.With("method", "NoticeTrip"))}
-}
 func addEndpointMiddlewareToAllMethods(mw map[string][]endpoint1.Middleware, m endpoint1.Middleware) {
-	methods := []string{"NoticeTrip"}
+	methods := []string{"NoticeTrip", "NoticeBill"}
 	for _, v := range methods {
 		mw[v] = append(mw[v], m)
 	}
