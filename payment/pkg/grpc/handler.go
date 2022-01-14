@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 	endpoint "payment/pkg/endpoint"
-	pb "payment/pkg/grpc/pb"
+	pb "pkg/pb"
 
 	grpc "github.com/go-kit/kit/transport/grpc"
 	context1 "golang.org/x/net/context"

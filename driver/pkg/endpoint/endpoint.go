@@ -2,21 +2,20 @@ package endpoint
 
 import (
 	"context"
-	"driver"
 	service "driver/pkg/service"
-
 	endpoint "github.com/go-kit/kit/endpoint"
+	"pkg/pb"
 )
 
 // GetDriverInfoRequest collects the request parameters for the GetDriverInfo method.
 type GetDriverInfoRequest struct {
-	Req *driver.DriverInfoRequest `json:"req"`
+	Req *pb.GetDriverInfoRequest `json:"req"`
 }
 
 // GetDriverInfoResponse collects the response parameters for the GetDriverInfo method.
 type GetDriverInfoResponse struct {
-	Resp *driver.DriverInfoReply `json:"resp"`
-	Err  error                   `json:"err"`
+	Resp *pb.GetDriverInfoReply `json:"resp"`
+	Err  error               `json:"err"`
 }
 
 // MakeGetDriverInfoEndpoint returns an endpoint that invokes GetDriverInfo on the service.
@@ -38,13 +37,13 @@ func (r GetDriverInfoResponse) Failed() error {
 
 // TakeOrderRequest collects the request parameters for the TakeOrder method.
 type TakeOrderRequest struct {
-	Req *driver.TakeOrderRequest `json:"req"`
+	Req *pb.TakeOrderRequest `json:"req"`
 }
 
 // TakeOrderResponse collects the response parameters for the TakeOrder method.
 type TakeOrderResponse struct {
-	Resp *driver.TakeOrderReply `json:"resp"`
-	Err  error                  `json:"err"`
+	Resp *pb.TakeOrderReply `json:"resp"`
+	Err  error              `json:"err"`
 }
 
 // MakeTakeOrderEndpoint returns an endpoint that invokes TakeOrder on the service.
@@ -72,7 +71,7 @@ type Failure interface {
 }
 
 // GetDriverInfo implements Service. Primarily useful in a client.
-func (e Endpoints) GetDriverInfo(ctx context.Context, req *driver.DriverInfoRequest) (resp *driver.DriverInfoReply, err error) {
+func (e Endpoints) GetDriverInfo(ctx context.Context, req *pb.GetDriverInfoRequest) (resp *pb.GetDriverInfoReply, err error) {
 	request := GetDriverInfoRequest{Req: req}
 	response, err := e.GetDriverInfoEndpoint(ctx, request)
 	if err != nil {
@@ -82,7 +81,7 @@ func (e Endpoints) GetDriverInfo(ctx context.Context, req *driver.DriverInfoRequ
 }
 
 // TakeOrder implements Service. Primarily useful in a client.
-func (e Endpoints) TakeOrder(ctx context.Context, req *driver.TakeOrderRequest) (resp *driver.TakeOrderReply, err error) {
+func (e Endpoints) TakeOrder(ctx context.Context, req *pb.TakeOrderRequest) (resp *pb.TakeOrderReply, err error) {
 	request := TakeOrderRequest{Req: req}
 	response, err := e.TakeOrderEndpoint(ctx, request)
 	if err != nil {

@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package pb;
+
+
+
+//The Driver service definition.
+service Driver {
+ rpc GetDriverInfo (GetDriverInfoRequest) returns (GetDriverInfoReply);
+ rpc TakeOrder     (TakeOrderRequest    ) returns (TakeOrderReply    );
+}
+
+message GetDriverInfoRequest {
+ string username = 1;
+ string password = 2;
+}
+
+message GetDriverInfoReply {
+ int64  user_id     = 1;
+ string name        = 2;
+ int32  age         = 3;
+ int64  account_num = 4;
+ float  asset       = 5;
+}
+
+message TakeOrderRequest {
+ int64  driver_id   = 1;
+ string driver_name = 2;
+ string location    = 3;
+ string car         = 4;
+}
+
+message TakeOrderReply {
+ string passenger_name = 2;
+ int64  start_time     = 3;
+ string origin         = 4;
+ string destination    = 5;
+ string path           = 6;
+}
+

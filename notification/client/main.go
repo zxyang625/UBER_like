@@ -12,8 +12,8 @@ import (
 	"log"
 	grpc1 "notification/client/grpc"
 	http1 "notification/client/http"
-	"notification/pkg/grpc/pb"
 	"pkg/discover"
+	"pkg/pb"
 	"pkg/tracing"
 )
 

@@ -2,10 +2,9 @@ package service
 
 import (
 	"context"
-	"passenger"
-	"time"
-
 	"github.com/go-kit/kit/log"
+	"pkg/pb"
+	"time"
 )
 
 // Middleware describes a service middleware.
@@ -24,14 +23,14 @@ func LoggingMiddleware(logger log.Logger) Middleware {
 	}
 }
 
-func (l loggingMiddleware) GetPassengerInfo(ctx context.Context, req *passenger.GetPassengerInfoRequest) (resp *passenger.GetPassengerInfoReply, err error) {
+func (l loggingMiddleware) GetPassengerInfo(ctx context.Context, req *pb.GetPassengerInfoRequest) (resp *pb.GetPassengerInfoReply, err error) {
 	defer func(start time.Time) {
 		l.logger.Log("method", "GetPassengerInfo", "err", err)
 	}(time.Now())
 	return l.next.GetPassengerInfo(ctx, req)
 }
 
-func (l loggingMiddleware) PublishOrder(ctx context.Context, req *passenger.PublishOrderRequest) (resp *passenger.PublishOrderReply, err error) {
+func (l loggingMiddleware) PublishOrder(ctx context.Context, req *pb.PublishOrderRequest) (resp *pb.PublishOrderReply, err error) {
 	defer func(start time.Time) {
 		l.logger.Log("method", "GetPassengerInfo", "err", err)
 	}(time.Now())

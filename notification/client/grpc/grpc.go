@@ -7,8 +7,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
 	endpoint1 "notification/pkg/endpoint"
-	pb "notification/pkg/grpc/pb"
 	service "notification/pkg/service"
+	"pkg/pb"
 )
 
 // New returns an AddService backed by a gRPC server at the other end

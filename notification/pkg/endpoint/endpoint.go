@@ -2,7 +2,7 @@ package endpoint
 
 import (
 	"context"
-	"notification/pkg/grpc/pb"
+	"pkg/pb"
 	service "notification/pkg/service"
 
 	endpoint "github.com/go-kit/kit/endpoint"

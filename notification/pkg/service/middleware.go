@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"notification/pkg/grpc/pb"
+	"pkg/pb"
 
 	log "github.com/go-kit/kit/log"
 )
@@ -26,14 +26,14 @@ func LoggingMiddleware(logger log.Logger) Middleware {
 
 func (l loggingMiddleware) NoticeTrip(ctx context.Context, req *pb.NoticeTripRequest) (resp *pb.NoticeTripReply, err error) {
 	defer func() {
-		l.logger.Log("method", "NoticeTrip", "err", err)
+		l.logger.Log("method", "NoticeTrip", "TripNum", req.TripMsg.GetTripNum(), "err", err)
 	}()
 	return l.next.NoticeTrip(ctx, req)
 }
 
 func (l loggingMiddleware) NoticeBill(ctx context.Context, req *pb.NoticeBillRequest) (resp *pb.NoticeBillReply, err error) {
 	defer func() {
-		l.logger.Log("method", "NoticeBill", "req", "err", err)
+		l.logger.Log("method", "NoticeBill", "BillNum", req.BillMsg.GetBillNum(), "err", err)
 	}()
 	return l.next.NoticeBill(ctx, req)
 }

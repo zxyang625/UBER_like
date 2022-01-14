@@ -6,7 +6,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	context1 "golang.org/x/net/context"
 	endpoint "notification/pkg/endpoint"
-	pb "notification/pkg/grpc/pb"
+	"pkg/pb"
 )
 
 // makeNoticeTripHandler creates the handler logic

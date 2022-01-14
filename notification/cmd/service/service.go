@@ -9,12 +9,12 @@ import (
 	"notification/pkg/config"
 	endpoint "notification/pkg/endpoint"
 	grpc "notification/pkg/grpc"
-	pb "notification/pkg/grpc/pb"
 	http1 "notification/pkg/http"
 	service "notification/pkg/service"
 	"os"
 	"os/signal"
 	"pkg/discover"
+	"pkg/pb"
 	"pkg/promtheus"
 	"pkg/tracing"
 	"strconv"
@@ -112,11 +112,13 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodNoticeTrip, "NoticeTrip histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodNoticeTrip, "NoticeTrip count")),
+			endpoint.TracingMiddle(config.MethodNoticeTrip),
 		},
 		"NoticeBill": {
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodNoticeBill, "NoticeBill histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodNoticeBill, "NoticeBill count")),
+			endpoint.TracingMiddle(config.MethodNoticeBill),
 		},
 	}
 

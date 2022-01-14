@@ -4,7 +4,6 @@ import (
 	"billing/pkg/config"
 	endpoint "billing/pkg/endpoint"
 	grpc "billing/pkg/grpc"
-	pb "billing/pkg/grpc/pb"
 	http1 "billing/pkg/http"
 	service "billing/pkg/service"
 	"flag"
@@ -16,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"pkg/discover"
+	"pkg/pb"
 	"pkg/promtheus"
 	"pkg/tracing"
 	"strconv"
@@ -111,11 +111,13 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGenBill, "GenBill histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGenBill, "GenBill count")),
+			endpoint.TracingMiddle(config.MethodGenBill),
 		},
 		"GetBillList" : {
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGetBillList, "GetBillList histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGetBillList, "GetBillList count")),
+			endpoint.TracingMiddle(config.MethodGetBillList),
 		},
 	}
 

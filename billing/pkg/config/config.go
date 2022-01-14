@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	System                  = "Passenger"
+	System                  = "Billing"
 	MethodGenBill 			= "GenBill"
 	MethodGetBillList 		= "GetBillList"
 )

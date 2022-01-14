@@ -2,20 +2,20 @@ package service
 
 import (
 	"context"
-	"trip"
+	"pkg/pb"
 )
 
 // TripService describes the service.
 type TripService interface {
-	GenTrip(ctx context.Context, req *trip.GenTripRequest) (resp *trip.GenTripReply, err error)
+	GenTrip(ctx context.Context, req *pb.GenTripRequest) (resp *pb.GenTripReply, err error)
 }
 
 type basicTripService struct{}
 
-func (b *basicTripService) GenTrip(ctx context.Context, req *trip.GenTripRequest) (resp *trip.GenTripReply, err error) {
-	return &trip.GenTripReply{
+func (b *basicTripService) GenTrip(ctx context.Context, req *pb.GenTripRequest) (resp *pb.GenTripReply, err error) {
+	return &pb.GenTripReply{
 		Status: true,
-		Trip: &trip.TripMsg{
+		TripMsg: &pb.TripMsg{
 			TripNum:       123456789,
 			PassengerId:   req.PassengerReq.PassengerId,
 			DriverId:      req.DriverReq.DriverId,

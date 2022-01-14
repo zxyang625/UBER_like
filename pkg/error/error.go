@@ -23,6 +23,11 @@ const (
 
 	TracingEmptyService
 	TracingNewTracerFail
+
+	MysqlConnectFail
+	MysqlNoAccountOrWrongPWD
+	MysqlNoUserOrWrongPWD
+	MysqlNoEnoughAsset
 )
 
 func Errorf(c code, format string, a ...interface{}) error {

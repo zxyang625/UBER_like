@@ -7,8 +7,8 @@ import (
 	grpc1 "github.com/go-kit/kit/transport/grpc"
 	grpc "google.golang.org/grpc"
 	endpoint1 "payment/pkg/endpoint"
-	pb "payment/pkg/grpc/pb"
 	service "payment/pkg/service"
+	pb "pkg/pb"
 )
 
 // New returns an AddService backed by a gRPC server at the other end

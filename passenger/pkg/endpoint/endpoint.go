@@ -2,21 +2,20 @@ package endpoint
 
 import (
 	"context"
-	"passenger"
-	service "passenger/pkg/service"
-
 	endpoint "github.com/go-kit/kit/endpoint"
+	service "passenger/pkg/service"
+	"pkg/pb"
 )
 
 // GetPassengerInfoRequest collects the request parameters for the GetPassengerInfo method.
 type GetPassengerInfoRequest struct {
-	Req *passenger.GetPassengerInfoRequest `json:"req"`
+	Req *pb.GetPassengerInfoRequest `json:"req"`
 }
 
 // GetPassengerInfoResponse collects the response parameters for the GetPassengerInfo method.
 type GetPassengerInfoResponse struct {
-	Resp *passenger.GetPassengerInfoReply `json:"resp"`
-	Err  error                            `json:"err"`
+	Resp *pb.GetPassengerInfoReply `json:"resp"`
+	Err  error                     `json:"err"`
 }
 
 // MakeGetPassengerInfoEndpoint returns an endpoint that invokes GetPassengerInfo on the service.
@@ -38,13 +37,13 @@ func (r GetPassengerInfoResponse) Failed() error {
 
 // PublishOrderRequest collects the request parameters for the PublishOrder method.
 type PublishOrderRequest struct {
-	Req *passenger.PublishOrderRequest `json:"req"`
+	Req *pb.PublishOrderRequest `json:"req"`
 }
 
 // PublishOrderResponse collects the response parameters for the PublishOrder method.
 type PublishOrderResponse struct {
-	Resp *passenger.PublishOrderReply `json:"resp"`
-	Err  error                        `json:"err"`
+	Resp *pb.PublishOrderReply `json:"resp"`
+	Err  error                 `json:"err"`
 }
 
 // MakePublishOrderEndpoint returns an endpoint that invokes PublishOrder on the service.
@@ -72,7 +71,7 @@ type Failure interface {
 }
 
 // GetPassengerInfo implements Service. Primarily useful in a client.
-func (e Endpoints) GetPassengerInfo(ctx context.Context, req *passenger.GetPassengerInfoRequest) (resp *passenger.GetPassengerInfoReply, err error) {
+func (e Endpoints) GetPassengerInfo(ctx context.Context, req *pb.GetPassengerInfoRequest) (resp *pb.GetPassengerInfoReply, err error) {
 	request := GetPassengerInfoRequest{Req: req}
 	response, err := e.GetPassengerInfoEndpoint(ctx, request)
 	if err != nil {
@@ -82,7 +81,7 @@ func (e Endpoints) GetPassengerInfo(ctx context.Context, req *passenger.GetPasse
 }
 
 // PublishOrder implements Service. Primarily useful in a client.
-func (e Endpoints) PublishOrder(ctx context.Context, req *passenger.PublishOrderRequest) (resp *passenger.PublishOrderReply, err error) {
+func (e Endpoints) PublishOrder(ctx context.Context, req *pb.PublishOrderRequest) (resp *pb.PublishOrderReply, err error) {
 	request := PublishOrderRequest{Req: req}
 	response, err := e.PublishOrderEndpoint(ctx, request)
 	if err != nil {

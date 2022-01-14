@@ -5,10 +5,9 @@ import (
 	endpoint "github.com/go-kit/kit/endpoint"
 	grpc1 "github.com/go-kit/kit/transport/grpc"
 	grpc "google.golang.org/grpc"
-	"passenger"
 	endpoint1 "passenger/pkg/endpoint"
-	pb "passenger/pkg/grpc/pb"
 	service "passenger/pkg/service"
+	"pkg/pb"
 )
 
 // New returns an AddService backed by a gRPC server at the other end
@@ -47,7 +46,7 @@ func encodeGetPassengerInfoRequest(_ context.Context, request interface{}) (inte
 func decodeGetPassengerInfoResponse(_ context.Context, reply interface{}) (interface{}, error) {
 	resp := reply.(*pb.GetPassengerInfoReply)
 	return endpoint1.GetPassengerInfoResponse{
-		Resp: &passenger.GetPassengerInfoReply{
+		Resp: &pb.GetPassengerInfoReply{
 			UserId:     resp.GetUserId(),
 			Name:       resp.GetName(),
 			Age:        resp.GetAge(),
@@ -76,7 +75,7 @@ func encodePublishOrderRequest(_ context.Context, request interface{}) (interfac
 func decodePublishOrderResponse(_ context.Context, reply interface{}) (interface{}, error) {
 	resp := reply.(*pb.PublishOrderReply)
 	return endpoint1.PublishOrderResponse{
-		Resp: &passenger.PublishOrderReply{
+		Resp: &pb.PublishOrderReply{
 			Status:     resp.GetStatus(),
 			DriverName: resp.GetDriverName(),
 			Location:   resp.GetLocation(),

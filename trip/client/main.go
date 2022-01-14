@@ -11,8 +11,8 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"pkg/discover"
+	"pkg/pb"
 	"pkg/tracing"
-	"trip"
 	grpc1 "trip/client/grpc"
 	http1 "trip/client/http"
 )
@@ -51,15 +51,15 @@ func main() {
 		parentSpan := zkTracer.StartSpan("GenTrip")
 		defer parentSpan.Finish()
 		ctx := zipkingo.NewContext(context.Background(), parentSpan)
-		data := &trip.GenTripRequest{
-			PassengerReq: &trip.PublishOrderRequest{
+		data := &pb.GenTripRequest{
+			PassengerReq: &pb.PublishOrderRequest{
 				PassengerId:   1,
 				StartTime:     0,
 				Origin:        "三元里",
 				Destination:   "成华大道",
 				PassengerName: "张三",
 			},
-			DriverReq:    &trip.TakeOrderRequest{
+			DriverReq:    &pb.TakeOrderRequest{
 				DriverId:   2,
 				DriverName: "李四",
 				Location:   "三里屯",
@@ -74,7 +74,7 @@ func main() {
 				log.Printf("conn trip failed, err: %+v", err)
 				return
 			}
-			fmt.Printf("%v %+v\n", res.Status, res.Trip)
+			fmt.Printf("%v %+v\n", res.Status, res.TripMsg)
 			//childSpan.Finish()
 		}
 	}
@@ -104,15 +104,15 @@ func main() {
 		parentSpan := zkTracer.StartSpan("GenTrip")
 		defer parentSpan.Finish()
 		ctx := zipkingo.NewContext(context.Background(), parentSpan)
-		data := &trip.GenTripRequest{
-			PassengerReq: &trip.PublishOrderRequest{
+		data := &pb.GenTripRequest{
+			PassengerReq: &pb.PublishOrderRequest{
 				PassengerId:   1,
 				StartTime:     0,
 				Origin:        "三元里",
 				Destination:   "成华大道",
 				PassengerName: "张三",
 			},
-			DriverReq:    &trip.TakeOrderRequest{
+			DriverReq:    &pb.TakeOrderRequest{
 				DriverId:   2,
 				DriverName: "李四",
 				Location:   "三里屯",
@@ -127,7 +127,7 @@ func main() {
 				log.Println(err)
 				return
 			}
-			fmt.Printf("%v %+v\n", r2.Status, r2.Trip)
+			fmt.Printf("%v %+v\n", r2.Status, r2.TripMsg)
 			//childSpan.Finish()
 		}
 	}

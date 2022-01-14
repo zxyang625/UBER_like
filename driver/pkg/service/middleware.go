@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"driver"
+	"pkg/pb"
 	"time"
 
 	"github.com/go-kit/kit/log"
@@ -24,14 +24,14 @@ func LoggingMiddleware(logger log.Logger) Middleware {
 	}
 }
 
-func (l loggingMiddleware) GetDriverInfo(ctx context.Context, req *driver.DriverInfoRequest) (resp *driver.DriverInfoReply, err error) {
+func (l loggingMiddleware) GetDriverInfo(ctx context.Context, req *pb.GetDriverInfoRequest) (resp *pb.GetDriverInfoReply, err error) {
 	defer func(start time.Time) {
 		l.logger.Log("method", "GetDriverInfo", "err", err)
 	}(time.Now())
 	return l.next.GetDriverInfo(ctx, req)
 }
 
-func (l loggingMiddleware) TakeOrder(ctx context.Context, req *driver.TakeOrderRequest) (resp *driver.TakeOrderReply, err error) {
+func (l loggingMiddleware) TakeOrder(ctx context.Context, req *pb.TakeOrderRequest) (resp *pb.TakeOrderReply, err error) {
 	defer func(start time.Time) {
 		l.logger.Log("method", "TakeOrder", "err", err)
 	}(time.Now())

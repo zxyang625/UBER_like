@@ -12,10 +12,10 @@ import (
 	"passenger/config"
 	endpoint "passenger/pkg/endpoint"
 	grpc "passenger/pkg/grpc"
-	pb "passenger/pkg/grpc/pb"
 	http1 "passenger/pkg/http"
 	service "passenger/pkg/service"
 	"pkg/discover"
+	pb "pkg/pb"
 	"pkg/promtheus"
 	"pkg/tracing"
 	"strconv"
@@ -111,11 +111,13 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGetPassengerInfo, "GetPassengerInfo histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGetPassengerInfo, "GetPassengerInfo count")),
+			endpoint.TracingMiddle(config.MethodGetPassengerInfo),
 		},
 		"PublishOrder": {
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodPublishOrder, "PublishOrder histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodPublishOrder, "PublishOrder count")),
+			endpoint.TracingMiddle(config.MethodPublishOrder),
 		},
 	}
 

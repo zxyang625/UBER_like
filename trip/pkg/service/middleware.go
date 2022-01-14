@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	log "github.com/go-kit/kit/log"
-	"trip"
+	"pkg/pb"
 )
 
 // Middleware describes a service middleware.
@@ -23,9 +23,9 @@ func LoggingMiddleware(logger log.Logger) Middleware {
 
 }
 
-func (l loggingMiddleware) GenTrip(ctx context.Context, req *trip.GenTripRequest) (resp *trip.GenTripReply, err error) {
+func (l loggingMiddleware) GenTrip(ctx context.Context, req *pb.GenTripRequest) (resp *pb.GenTripReply, err error) {
 	defer func() {
-		l.logger.Log("method", "GenTrip", "req", "err", err)
+		l.logger.Log("method", "GenTrip", "TripNum", resp.GetTripMsg().GetTripNum(), "err", err)
 	}()
 	return l.next.GenTrip(ctx, req)
 }

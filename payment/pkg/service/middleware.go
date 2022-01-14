@@ -29,3 +29,4 @@ func (l loggingMiddleware) Pay(ctx context.Context, billNum int64, accountNum in
 	}(time.Now())
 	return l.next.Pay(ctx, billNum, accountNum, payPassword)
 }
+

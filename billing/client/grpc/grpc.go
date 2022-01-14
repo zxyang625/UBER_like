@@ -1,14 +1,14 @@
 package grpc
 
 import (
-	"billing"
 	endpoint1 "billing/pkg/endpoint"
-	pb "billing/pkg/grpc/pb"
 	service "billing/pkg/service"
 	"context"
 	endpoint "github.com/go-kit/kit/endpoint"
 	grpc1 "github.com/go-kit/kit/transport/grpc"
+	"github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
+	"pkg/pb"
 )
 
 // New returns an AddService backed by a gRPC server at the other end
@@ -58,9 +58,9 @@ func encodeGenBillRequest(_ context.Context, request interface{}) (interface{}, 
 func decodeGenBillResponse(_ context.Context, reply interface{}) (interface{}, error) {
 	resp := reply.(*pb.GenBillReply)
 	return endpoint1.GenBillResponse{
-		Resp: &billing.GenBillReply{
+		Resp: &pb.GenBillReply{
 			Status:  resp.GetStatus(),
-			BillMsg: &billing.BillMsg{
+			BillMsg: &pb.BillMsg{
 				BillNum:       resp.GetBillMsg().GetBillNum(),
 				Price:         resp.GetBillMsg().GetPrice(),
 				StartTime:     resp.GetBillMsg().GetStartTime(),
@@ -90,21 +90,31 @@ func encodeGetBillListRequest(_ context.Context, request interface{}) (interface
 func decodeGetBillListResponse(_ context.Context, reply interface{}) (interface{}, error) {
 	resp := reply.(*pb.GetBillListReply)
 	endResp := endpoint1.GetBillListResponse{
-		Resp: make([]*billing.BillMsg, 0, len(resp.BillMsgList)),
+		Resp: make([]*pb.BillMsg, 0, len(resp.BillList)),
 		Err:  nil,
 	}
-	for i := range resp.BillMsgList {
-		endResp.Resp = append(endResp.Resp, &billing.BillMsg{
-			BillNum:       resp.BillMsgList[i].GetBillNum(),
-			Price:         resp.BillMsgList[i].GetPrice(),
-			StartTime:     resp.BillMsgList[i].GetStartTime(),
-			EndTime:       resp.BillMsgList[i].GetEndTime(),
-			Origin:        resp.BillMsgList[i].GetOrigin(),
-			Destination:   resp.BillMsgList[i].GetDestination(),
-			PassengerName: resp.BillMsgList[i].GetPassengerName(),
-			DriverName:    resp.BillMsgList[i].GetDriverName(),
-			Payed:         resp.BillMsgList[i].GetPayed(),
-		})
+	for i := range resp.BillList {
+		data, err := proto.Marshal(resp.BillList[i])
+		if err != nil {
+			return nil, err
+		}
+		temp := &pb.BillMsg{}
+		err = proto.Unmarshal(data, temp)
+		if err != nil {
+			return nil, err
+		}
+		endResp.Resp = append(endResp.Resp, temp)
+		//endResp.Resp = append(endResp.Resp, &pb.BillMsg{
+		//	BillNum:       resp.BillMsgList[i].GetBillNum(),
+		//	Price:         resp.BillMsgList[i].GetPrice(),
+		//	StartTime:     resp.BillMsgList[i].GetStartTime(),
+		//	EndTime:       resp.BillMsgList[i].GetEndTime(),
+		//	Origin:        resp.BillMsgList[i].GetOrigin(),
+		//	Destination:   resp.BillMsgList[i].GetDestination(),
+		//	PassengerName: resp.BillMsgList[i].GetPassengerName(),
+		//	DriverName:    resp.BillMsgList[i].GetDriverName(),
+		//	Payed:         resp.BillMsgList[i].GetPayed(),
+		//})
 	}
 	return endResp, nil
 }

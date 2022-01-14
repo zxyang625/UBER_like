@@ -3,8 +3,8 @@ package grpc
 
 import (
 	endpoint "billing/pkg/endpoint"
-	pb "billing/pkg/grpc/pb"
 	grpc "github.com/go-kit/kit/transport/grpc"
+	"pkg/pb"
 )
 
 // NewGRPCServer makes a set of endpoints available as a gRPC AddServer

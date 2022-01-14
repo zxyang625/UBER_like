@@ -2,28 +2,68 @@ package service
 
 import (
 	"context"
-	"passenger"
+	grpc1 "driver/client/grpc"
+	"encoding/json"
+	"fmt"
+	grpc2 "github.com/go-kit/kit/transport/grpc"
+	"google.golang.org/grpc"
+	"log"
+	"pkg/dao/models"
+	"pkg/pb"
 )
 
 // PassengerService describes the service.
 type PassengerService interface {
-	GetPassengerInfo(ctx context.Context, req *passenger.GetPassengerInfoRequest) (resp *passenger.GetPassengerInfoReply, err error)
-	PublishOrder(ctx context.Context, req *passenger.PublishOrderRequest) (resp *passenger.PublishOrderReply, err error)
+	GetPassengerInfo(ctx context.Context, req *pb.GetPassengerInfoRequest) (resp *pb.GetPassengerInfoReply, err error)
+	PublishOrder(ctx context.Context, req *pb.PublishOrderRequest) (resp *pb.PublishOrderReply, err error)
 }
 type basicPassengerService struct{}
 
-func (b *basicPassengerService) GetPassengerInfo(ctx context.Context, req *passenger.GetPassengerInfoRequest) (resp *passenger.GetPassengerInfoReply, err error) {
-	resp = &passenger.GetPassengerInfoReply{
-		UserId:     1111111111111,
-		Name:       req.Username,
-		Age:        12,
-		AccountNum: 123456789,
-		Asset:      5245.656,
+func (b *basicPassengerService) GetPassengerInfo(ctx context.Context, req *pb.GetPassengerInfoRequest) (resp *pb.GetPassengerInfoReply, err error) {
+	resp = &pb.GetPassengerInfoReply{}
+	passenger, err := models.GetPassenger(req.GetUsername(), req.GetPassword())
+	if err != nil {
+		return nil, fmt.Errorf("GetPassengerInfo fail, err: %v", err)
 	}
+	data, err := json.Marshal(passenger)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(data, resp)
+	if err != nil {
+		return nil, err
+	}
+	asset, _ := models.GetAsset(passenger.AccountNum)
+	resp.Asset = asset
 	return resp, nil
 }
-func (b *basicPassengerService) PublishOrder(ctx context.Context, req *passenger.PublishOrderRequest) (resp *passenger.PublishOrderReply, err error) {
-	resp = &passenger.PublishOrderReply{
+
+func (b *basicPassengerService) PublishOrder(ctx context.Context, req *pb.PublishOrderRequest) (resp *pb.PublishOrderReply, err error) {
+	conn, err := grpc.Dial("127.0.0.1:8092", grpc.WithInsecure())
+	if err != nil {
+		log.Println("1", err)
+		return
+	}
+	defer conn.Close()
+	//reporter := http.NewReporter(tracing.DefaultZipkinURL)
+	//defer reporter.Close()
+	//zkTracer, err := zipkingo.NewTracer(reporter)
+	//if err != nil {
+	//	log.Printf("New GRPC TracingImpl failed, err: %v", err)
+	//	return
+	//}
+	//zkClientTrace := kitzipkin.GRPCClientTrace(zkTracer)
+	svc, err := grpc1.New(conn, map[string][]grpc2.ClientOption{
+		//"TakeOrder" : {zkClientTrace},
+	})
+	//opentracing.StartSpanFromContextWithTracer(ctx, zipkin.TraceEndpoint())
+	if err != nil {
+		log.Println("2", err)
+		return
+	}
+	resp1, err := svc.TakeOrder(ctx, &pb.TakeOrderRequest{})
+	log.Println("resp1", resp1.StartTime)
+	resp = &pb.PublishOrderReply{
 		Status:     true,
 		DriverName: "老司机",
 		Location:   "三元里",

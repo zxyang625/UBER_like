@@ -2,13 +2,12 @@ package grpc
 
 import (
 	"context"
-	"driver"
 	endpoint1 "driver/pkg/endpoint"
-	pb "driver/pkg/grpc/pb"
 	service "driver/pkg/service"
 	endpoint "github.com/go-kit/kit/endpoint"
 	grpc1 "github.com/go-kit/kit/transport/grpc"
 	grpc "google.golang.org/grpc"
+	"pkg/pb"
 )
 
 // New returns an AddService backed by a gRPC server at the other end
@@ -47,7 +46,7 @@ func encodeGetDriverInfoRequest(_ context.Context, request interface{}) (interfa
 func decodeGetDriverInfoResponse(_ context.Context, reply interface{}) (interface{}, error) {
 	resp := reply.(*pb.GetDriverInfoReply)
 	return endpoint1.GetDriverInfoResponse{
-		Resp: &driver.DriverInfoReply{
+		Resp: &pb.GetDriverInfoReply{
 			UserId:     resp.UserId,
 			Name:       resp.Name,
 			Age:        resp.Age,
@@ -75,7 +74,7 @@ func encodeTakeOrderRequest(_ context.Context, request interface{}) (interface{}
 func decodeTakeOrderResponse(_ context.Context, reply interface{}) (interface{}, error) {
 	resp := reply.(*pb.TakeOrderReply)
 	return endpoint1.TakeOrderResponse{
-		Resp: &driver.TakeOrderReply{
+		Resp: &pb.TakeOrderReply{
 			PassengerName: resp.PassengerName,
 			StartTime:     resp.StartTime,
 			Origin:        resp.Origin,

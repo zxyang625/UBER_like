@@ -4,9 +4,8 @@ import (
 	"context"
 	grpc "github.com/go-kit/kit/transport/grpc"
 	context1 "golang.org/x/net/context"
-	"passenger"
 	endpoint "passenger/pkg/endpoint"
-	pb "passenger/pkg/grpc/pb"
+	pb "pkg/pb"
 )
 
 // makeGetPassengerInfoHandler creates the handler logic
@@ -20,7 +19,7 @@ func makeGetPassengerInfoHandler(endpoints endpoint.Endpoints, options []grpc.Se
 func decodeGetPassengerInfoRequest(_ context.Context, r interface{}) (interface{}, error) {
 	req := r.(*pb.GetPassengerInfoRequest)
 	return endpoint.GetPassengerInfoRequest{
-		Req: &passenger.GetPassengerInfoRequest{
+		Req: &pb.GetPassengerInfoRequest{
 			Username: req.Username,
 			Password: req.Password,
 		},
@@ -59,7 +58,7 @@ func makePublishOrderHandler(endpoints endpoint.Endpoints, options []grpc.Server
 func decodePublishOrderRequest(_ context.Context, r interface{}) (interface{}, error) {
 	req := r.(*pb.PublishOrderRequest)
 	return endpoint.PublishOrderRequest{
-		Req: &passenger.PublishOrderRequest{
+		Req: &pb.PublishOrderRequest{
 			PassengerId:   req.GetPassengerId(),
 			StartTime:     req.GetStartTime(),
 			Origin:        req.GetOrigin(),

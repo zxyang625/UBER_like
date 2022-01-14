@@ -4,7 +4,6 @@ import (
 	"driver/pkg/config"
 	endpoint "driver/pkg/endpoint"
 	grpc "driver/pkg/grpc"
-	pb "driver/pkg/grpc/pb"
 	http1 "driver/pkg/http"
 	service "driver/pkg/service"
 	"flag"
@@ -15,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"pkg/discover"
+	"pkg/pb"
 	"pkg/promtheus"
 	"pkg/tracing"
 	"strconv"
@@ -112,11 +112,13 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGetDriverInfo, "GetDriverInfo histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGetDriverInfo, "GetDriverInfo count")),
+			endpoint.TracingMiddle(config.MethodGetDriverInfo),
 		},
-		"takeOrder": {
+		"TakeOrder": {
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodTakeOrder, "TakeOrder histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodTakeOrder, "TakeOrder count")),
+			endpoint.TracingMiddle(config.MethodTakeOrder),
 		},
 	}
 

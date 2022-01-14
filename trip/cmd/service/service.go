@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"pkg/discover"
+	"pkg/pb"
 	"pkg/promtheus"
 	"pkg/tracing"
 	"strconv"
@@ -18,7 +19,6 @@ import (
 	"trip/pkg/config"
 	endpoint "trip/pkg/endpoint"
 	grpc "trip/pkg/grpc"
-	pb "trip/pkg/grpc/pb"
 	http1 "trip/pkg/http"
 	service "trip/pkg/service"
 
@@ -111,6 +111,7 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGenTrip, "GenTrip histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGenTrip, "GenTrip count")),
+			endpoint.TracingMiddle(),
 		},
 	}
 

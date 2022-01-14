@@ -1,12 +1,12 @@
 package grpc
 
 import (
-	"billing"
 	endpoint "billing/pkg/endpoint"
-	pb "billing/pkg/grpc/pb"
 	"context"
 	grpc "github.com/go-kit/kit/transport/grpc"
+	"github.com/golang/protobuf/proto"
 	context1 "golang.org/x/net/context"
+	"pkg/pb"
 )
 
 // makeGenBillHandler creates the handler logic
@@ -20,8 +20,8 @@ func makeGenBillHandler(endpoints endpoint.Endpoints, options []grpc.ServerOptio
 func decodeGenBillRequest(_ context.Context, r interface{}) (interface{}, error) {
 	req := r.(*pb.GenBillRequest)
 	return endpoint.GenBillRequest{
-		Req: &billing.GenBillRequest{
-			TripMsg: &billing.TripMsg{
+		Req: &pb.GenBillRequest{
+			TripMsg: &pb.TripMsg{
 				TripNum:       req.TripMsg.TripNum,
 				PassengerId:   req.TripMsg.PassengerId,
 				DriverId:      req.TripMsg.DriverId,
@@ -85,20 +85,19 @@ func decodeGetBillListRequest(_ context.Context, r interface{}) (interface{}, er
 func encodeGetBillListResponse(_ context.Context, r interface{}) (interface{}, error) {
 	resp := r.(endpoint.GetBillListResponse)
 	pbResp := &pb.GetBillListReply{
-		BillMsgList: make([]*pb.BillMsg, 0, len(resp.Resp)),
+		BillList: make([]*pb.BillMsg, 0, len(resp.Resp)),
 	}
 	for i := range resp.Resp {
-		pbResp.BillMsgList = append(pbResp.BillMsgList, &pb.BillMsg{
-			BillNum:              resp.Resp[i].BillNum,
-			Price:                resp.Resp[i].Price,
-			StartTime:            resp.Resp[i].StartTime,
-			EndTime:              resp.Resp[i].EndTime,
-			Origin:               resp.Resp[i].Origin,
-			Destination:          resp.Resp[i].Destination,
-			PassengerName:        resp.Resp[i].PassengerName,
-			DriverName:           resp.Resp[i].DriverName,
-			Payed:                resp.Resp[i].Payed,
-		})
+		data, err := proto.Marshal(resp.Resp[i])
+		if err != nil {
+			return nil, err
+		}
+		temp := &pb.BillMsg{}
+		err = proto.Unmarshal(data, temp)
+		if err != nil {
+			return nil, err
+		}
+		pbResp.BillList = append(pbResp.BillList, temp)
 	}
 	return pbResp, resp.Err
 }

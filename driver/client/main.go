@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"driver"
 	grpc1 "driver/client/grpc"
 	http1 "driver/client/http"
 	"fmt"
@@ -14,6 +13,7 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"pkg/discover"
+	"pkg/pb"
 	"pkg/tracing"
 )
 
@@ -42,7 +42,7 @@ func main() {
 		}
 		zkClientTrace := kitzipkin.HTTPClientTrace(zkTracer)
 		conn, err := http1.New("127.0.0.1:8081", map[string][]kithttp.ClientOption{
-			"Driver" : {zkClientTrace},
+			"GetDriverInfo" : {zkClientTrace},
 		})
 		if err != nil {
 			log.Printf("new http conn failed, err: %v", err)
@@ -51,7 +51,7 @@ func main() {
 		parentSpan := zkTracer.StartSpan("Driver")
 		defer parentSpan.Finish()
 		ctx := zipkingo.NewContext(context.Background(), parentSpan)
-		data := &driver.DriverInfoRequest{
+		data := &pb.GetDriverInfoRequest{
 			Username: "aaaaaaaaaaaa",
 			Password: "bbbbbbbbbb",
 		}
@@ -83,7 +83,7 @@ func main() {
 		}
 		defer conn.Close()
 		svc2, err := grpc1.New(conn, map[string][]grpc2.ClientOption{
-			"Driver": {zkClientTrace},
+			"TakeOrder": {zkClientTrace},
 		})
 		if err != nil {
 			log.Println("2", err)
@@ -92,7 +92,7 @@ func main() {
 		parentSpan := zkTracer.StartSpan("Driver")
 		defer parentSpan.Finish()
 		ctx := zipkingo.NewContext(context.Background(), parentSpan)
-		data := &driver.TakeOrderRequest{
+		data := &pb.TakeOrderRequest{
 			DriverId:   1234556,
 			DriverName: "王老五",
 			Location:   "街道口",
@@ -105,7 +105,7 @@ func main() {
 				log.Println(err)
 				return
 			}
-			fmt.Println(r2)
+			fmt.Println(r2.PassengerName, r2.GetPath(), r2.GetOrigin())
 			childSpan.Finish()
 		}
 	}

@@ -3,7 +3,7 @@ package grpc
 
 import (
 	endpoint "driver/pkg/endpoint"
-	pb "driver/pkg/grpc/pb"
+	"pkg/pb"
 	grpc "github.com/go-kit/kit/transport/grpc"
 )
 

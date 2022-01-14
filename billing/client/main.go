@@ -1,7 +1,6 @@
 package main
 
 import (
-	"billing"
 	grpc1 "billing/client/grpc"
 	http1 "billing/client/http"
 	"context"
@@ -14,6 +13,7 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"pkg/discover"
+	"pkg/pb"
 	"pkg/tracing"
 )
 
@@ -51,8 +51,8 @@ func main() {
 		parentSpan := zkTracer.StartSpan("GenBill")
 		defer parentSpan.Finish()
 		ctx := zipkingo.NewContext(context.Background(), parentSpan)
-		data := &billing.GenBillRequest{
-			TripMsg: &billing.TripMsg{
+		data := &pb.GenBillRequest{
+			TripMsg: &pb.TripMsg{
 			TripNum:       123456789,
 			PassengerId:   123,
 			DriverId:      5234,
@@ -65,18 +65,15 @@ func main() {
 			Car:           "req.DriverReq.Car",
 			Path:          "直走一公里后右转",
 		}}
-		for i := 0; i < 100; i++ {
-			//childSpan := zkTracer.StartSpan("childSpan", zipkingo.Parent(parentSpan.Context()))
-			ctx1 := zipkingo.NewContext(ctx, parentSpan)
-			res, err := conn.GenBill(ctx1, data)
-			if err != nil {
-				log.Printf("conn Billing failed, err: %v", err)
-				return
-			}
-			fmt.Printf("%v %+v\n", res.Status, res.BillMsg)
-			//childSpan.Finish()
+		ctx1 := zipkingo.NewContext(ctx, parentSpan)
+		res, err := conn.GenBill(ctx1, data)
+		if err != nil {
+			log.Printf("conn Billing failed, err: %v", err)
+			return
 		}
+		fmt.Printf("%v %+v\n", res.Status, res.BillMsg)
 	}
+
 
 	{ //grpc
 		reporter := http.NewReporter(tracing.DefaultZipkinURL)
@@ -103,20 +100,18 @@ func main() {
 		parentSpan := zkTracer.StartSpan("GetBillList")
 		defer parentSpan.Finish()
 		ctx := zipkingo.NewContext(context.Background(), parentSpan)
-		data := 1232154156
-		for i := 0; i < 100; i++ {
-			//childSpan := zkTracer.StartSpan("childSpan", zipkingo.Parent(parentSpan.Context()))
-			ctx1 := zipkingo.NewContext(ctx, parentSpan)
-			r2, err := svc2.GetBillList(ctx1, int64(data))
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			for i := range r2 {
-				fmt.Printf("%+v\n", r2[i])
-			}
-			//childSpan.Finish()
+		data := 11
+		//childSpan := zkTracer.StartSpan("childSpan", zipkingo.Parent(parentSpan.Context()))
+		ctx1 := zipkingo.NewContext(ctx, parentSpan)
+		r2, err := svc2.GetBillList(ctx1, int64(data))
+		if err != nil {
+			log.Println(err)
+			return
 		}
+		for i := range r2 {
+			fmt.Println(r2[i].GetBillNum(), r2[i].GetPassengerName())
+		}
+		//childSpan.Finish()
 	}
 }
 

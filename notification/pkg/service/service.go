@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"notification/pkg/grpc/pb"
+	"pkg/pb"
 )
 
 // NotificationService describes the service.

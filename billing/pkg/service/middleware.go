@@ -1,8 +1,8 @@
 package service
 
 import (
-	"billing"
 	"context"
+	"pkg/pb"
 
 	log "github.com/go-kit/kit/log"
 )
@@ -24,15 +24,15 @@ func LoggingMiddleware(logger log.Logger) Middleware {
 
 }
 
-func (l loggingMiddleware) GenBill(ctx context.Context, req *billing.GenBillRequest) (resp *billing.GenBillReply, err error) {
+func (l loggingMiddleware) GenBill(ctx context.Context, req *pb.GenBillRequest) (resp *pb.GenBillReply, err error) {
 	defer func() {
-		l.logger.Log("method", "GenBill", "req", req, "resp", resp, "err", err)
+		l.logger.Log("method", "GenBill", "BillNum", resp.BillMsg.GetBillNum(), "err", err)
 	}()
 	return l.next.GenBill(ctx, req)
 }
-func (l loggingMiddleware) GetBillList(ctx context.Context, userId int64) (resp []*billing.BillMsg, err error) {
+func (l loggingMiddleware) GetBillList(ctx context.Context, userId int64) (resp []*pb.BillMsg, err error) {
 	defer func() {
-		l.logger.Log("method", "GetBillList", "userId", userId, "resp", resp, "err", err)
+		l.logger.Log("method", "GetBillList", "userId", userId, "err", err)
 	}()
 	return l.next.GetBillList(ctx, userId)
 }

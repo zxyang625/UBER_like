@@ -3,6 +3,9 @@ package endpoint
 import (
 	"context"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
+	"github.com/openzipkin/zipkin-go"
+	"github.com/openzipkin/zipkin-go/model"
 	"payment/pkg/config"
 	"time"
 
@@ -45,6 +48,34 @@ func LoggingMiddleware(logger log.Logger) endpoint.Middleware {
 			defer func(begin time.Time) {
 				logger.Log("transport_error", err, "took", time.Since(begin).Microseconds())
 			}(time.Now())
+			return next(ctx, request)
+		}
+	}
+}
+
+func TracingMiddle(methodName string) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+			parentSpan := opentracing.SpanFromContext(ctx)
+			childSpan := parentSpan.Tracer().StartSpan("service." + methodName, opentracing.ChildOf(parentSpan.Context()))
+			defer childSpan.Finish()
+			return next(ctx, request)
+		}
+	}
+}
+
+
+func TraceEndpoint(tracer *zipkin.Tracer, name string) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (interface{}, error) {
+			var sc model.SpanContext
+			if parentSpan := zipkin.SpanFromContext(ctx); parentSpan != nil {
+				sc = parentSpan.Context()
+			}
+			sp := tracer.StartSpan(name, zipkin.Parent(sc))
+			defer sp.Finish()
+
+			ctx = zipkin.NewContext(ctx, sp)
 			return next(ctx, request)
 		}
 	}

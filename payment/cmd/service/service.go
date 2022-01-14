@@ -12,10 +12,10 @@ import (
 	"payment/pkg/config"
 	endpoint "payment/pkg/endpoint"
 	grpc "payment/pkg/grpc"
-	pb "payment/pkg/grpc/pb"
 	http1 "payment/pkg/http"
 	service "payment/pkg/service"
 	"pkg/discover"
+	pb "pkg/pb"
 	"pkg/promtheus"
 	"pkg/tracing"
 	"strconv"
@@ -46,20 +46,22 @@ func Run() {
 	fs.Parse(os.Args[1:])
 
 	logger = config.GetKitLogger()
-
+	var err error
+	tracingImpl := &tracing.TracingImpl{}
 	if *zipkinURL != "" {
 		logger.Log("tracer", "Zipkin", "URL", *zipkinURL)
-		tracingImpl, err := tracing.NewOpenTracingTracer(*serviceName)
+		tracingImpl, err = tracing.NewOpenTracingTracer(*serviceName)
 		if err != nil {
 			logger.Log("new zipkin tracer", "failed")
 			os.Exit(-1)
 		}
 		tracer = tracingImpl.Tracer
-		defer tracingImpl.Reporter.Close()
+		//defer tracingImpl.Reporter.Close()
 	}  else {
 		logger.Log("tracer", "none")
 		tracer = opentracinggo.GlobalTracer()
 	}
+	defer tracingImpl.Reporter.Close()
 	/////////////////////////////////////////////////
 	discoverClient, err := discover.NewDiscoverClient(*consulAddr, *consulPort, true)
 	if err != nil {
@@ -107,8 +109,9 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]kitendpoint.Mi
 	mw = map[string][]kitendpoint.Middleware{
 		"Pay": {
 			endpoint.LoggingMiddleware(logger),
-			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodPay, "pay histogram")),
-			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodPay, "pay count")),
+			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodPay, "Pay histogram")),
+			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodPay, "Pay count")),
+			endpoint.TracingMiddle(config.MethodPay),
 		},
 	}
 

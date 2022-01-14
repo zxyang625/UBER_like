@@ -1,7 +1,7 @@
 package endpoint
 
 import (
-	"billing"
+	"pkg/pb"
 	service "billing/pkg/service"
 	"context"
 	endpoint "github.com/go-kit/kit/endpoint"
@@ -9,13 +9,13 @@ import (
 
 // GenBillRequest collects the request parameters for the GenBill method.
 type GenBillRequest struct {
-	Req *billing.GenBillRequest `json:"req"`
+	Req *pb.GenBillRequest `json:"req"`
 }
 
 // GenBillResponse collects the response parameters for the GenBill method.
 type GenBillResponse struct {
-	Resp *billing.GenBillReply `json:"resp"`
-	Err  error                 `json:"err"`
+	Resp *pb.GenBillReply `json:"resp"`
+	Err  error            `json:"err"`
 }
 
 // MakeGenBillEndpoint returns an endpoint that invokes GenBill on the service.
@@ -42,8 +42,8 @@ type GetBillListRequest struct {
 
 // GetBillListResponse collects the response parameters for the GetBillList method.
 type GetBillListResponse struct {
-	Resp []*billing.BillMsg `json:"resp"`
-	Err  error              `json:"err"`
+	Resp []*pb.BillMsg `json:"resp"`
+	Err  error         `json:"err"`
 }
 
 // MakeGetBillListEndpoint returns an endpoint that invokes GetBillList on the service.
@@ -71,7 +71,7 @@ type Failure interface {
 }
 
 // GenBill implements Service. Primarily useful in a client.
-func (e Endpoints) GenBill(ctx context.Context, req *billing.GenBillRequest) (resp *billing.GenBillReply, err error) {
+func (e Endpoints) GenBill(ctx context.Context, req *pb.GenBillRequest) (resp *pb.GenBillReply, err error) {
 	request := GenBillRequest{Req: req}
 	response, err := e.GenBillEndpoint(ctx, request)
 	if err != nil {
@@ -81,7 +81,7 @@ func (e Endpoints) GenBill(ctx context.Context, req *billing.GenBillRequest) (re
 }
 
 // GetBillList implements Service. Primarily useful in a client.
-func (e Endpoints) GetBillList(ctx context.Context, userId int64) (resp []*billing.BillMsg, err error) {
+func (e Endpoints) GetBillList(ctx context.Context, userId int64) (resp []*pb.BillMsg, err error) {
 	request := GetBillListRequest{UserId: userId}
 	response, err := e.GetBillListEndpoint(ctx, request)
 	if err != nil {

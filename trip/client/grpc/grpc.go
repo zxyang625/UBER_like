@@ -5,9 +5,8 @@ import (
 	endpoint "github.com/go-kit/kit/endpoint"
 	grpc1 "github.com/go-kit/kit/transport/grpc"
 	grpc "google.golang.org/grpc"
-	"trip"
+	"pkg/pb"
 	endpoint1 "trip/pkg/endpoint"
-	pb "trip/pkg/grpc/pb"
 	service "trip/pkg/service"
 )
 
@@ -50,9 +49,9 @@ func encodeGenTripRequest(_ context.Context, request interface{}) (interface{}, 
 func decodeGenTripResponse(_ context.Context, reply interface{}) (interface{}, error) {
 	resp := reply.(*pb.GenTripReply)
 	return endpoint1.GenTripResponse{
-		Resp: &trip.GenTripReply{
+		Resp: &pb.GenTripReply{
 			Status: resp.GetStatus(),
-			Trip:   &trip.TripMsg{
+			TripMsg:   &pb.TripMsg{
 				TripNum:       resp.GetTripMsg().GetTripNum(),
 				PassengerId:   resp.GetTripMsg().GetPassengerId(),
 				DriverId:      resp.GetTripMsg().GetDriverId(),

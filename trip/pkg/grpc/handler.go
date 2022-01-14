@@ -4,9 +4,8 @@ import (
 	"context"
 	grpc "github.com/go-kit/kit/transport/grpc"
 	context1 "golang.org/x/net/context"
-	"trip"
+	pb "pkg/pb"
 	endpoint "trip/pkg/endpoint"
-	pb "trip/pkg/grpc/pb"
 )
 
 // makeGenTripHandler creates the handler logic
@@ -20,15 +19,15 @@ func makeGenTripHandler(endpoints endpoint.Endpoints, options []grpc.ServerOptio
 func decodeGenTripRequest(_ context.Context, r interface{}) (interface{}, error) {
 	req := r.(*pb.GenTripRequest)
 	return endpoint.GenTripRequest{
-		Req: &trip.GenTripRequest{
-			PassengerReq: &trip.PublishOrderRequest{
+		Req: &pb.GenTripRequest{
+			PassengerReq: &pb.PublishOrderRequest{
 				PassengerId:   req.PassengerReq.GetPassengerId(),
 				StartTime:     req.PassengerReq.GetStartTime(),
 				Origin:        req.PassengerReq.GetOrigin(),
 				Destination:   req.PassengerReq.GetDestination(),
 				PassengerName: req.PassengerReq.GetPassengerName(),
 			},
-			DriverReq:    &trip.TakeOrderRequest{
+			DriverReq:    &pb.TakeOrderRequest{
 				DriverId:   req.DriverReq.GetDriverId(),
 				DriverName: req.DriverReq.GetDriverName(),
 				Location:   req.DriverReq.GetLocation(),
@@ -46,17 +45,17 @@ func encodeGenTripResponse(_ context.Context, r interface{}) (interface{}, error
 	return &pb.GenTripReply{
 		Status:      resp.Resp.Status,
 		TripMsg:     &pb.TripMsg{
-			TripNum:              resp.Resp.Trip.TripNum,
-			PassengerId:          resp.Resp.Trip.PassengerId,
-			DriverId:             resp.Resp.Trip.DriverId,
-			PassengerName:        resp.Resp.Trip.PassengerName,
-			DriverName:           resp.Resp.Trip.DriverName,
-			StartTime:            resp.Resp.Trip.StartTime,
-			EndTime:              resp.Resp.Trip.EndTime,
-			Origin:               resp.Resp.Trip.Origin,
-			Destination:          resp.Resp.Trip.Destination,
-			Car:                  resp.Resp.Trip.Car,
-			Path:                 resp.Resp.Trip.Path,
+			TripNum:              resp.Resp.TripMsg.TripNum,
+			PassengerId:          resp.Resp.TripMsg.PassengerId,
+			DriverId:             resp.Resp.TripMsg.DriverId,
+			PassengerName:        resp.Resp.TripMsg.PassengerName,
+			DriverName:           resp.Resp.TripMsg.DriverName,
+			StartTime:            resp.Resp.TripMsg.StartTime,
+			EndTime:              resp.Resp.TripMsg.EndTime,
+			Origin:               resp.Resp.TripMsg.Origin,
+			Destination:          resp.Resp.TripMsg.Destination,
+			Car:                  resp.Resp.TripMsg.Car,
+			Path:                 resp.Resp.TripMsg.Path,
 		},
 	}, resp.Err
 }

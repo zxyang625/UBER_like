@@ -6,6 +6,7 @@ import (
 	endpoint "github.com/go-kit/kit/endpoint"
 	log "github.com/go-kit/kit/log"
 	metrics "github.com/go-kit/kit/metrics"
+	"github.com/opentracing/opentracing-go"
 	"passenger/config"
 	"time"
 )
@@ -44,6 +45,17 @@ func LoggingMiddleware(logger log.Logger) endpoint.Middleware {
 			defer func(begin time.Time) {
 				logger.Log("transport_error", err, "took", time.Since(begin).Microseconds())
 			}(time.Now())
+			return next(ctx, request)
+		}
+	}
+}
+
+func TracingMiddle(methodName string) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+			parentSpan := opentracing.SpanFromContext(ctx)
+			childSpan := parentSpan.Tracer().StartSpan("service." + methodName, opentracing.ChildOf(parentSpan.Context()))
+			defer childSpan.Finish()
 			return next(ctx, request)
 		}
 	}

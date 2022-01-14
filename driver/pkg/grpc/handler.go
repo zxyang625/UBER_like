@@ -2,11 +2,10 @@ package grpc
 
 import (
 	"context"
-	"driver"
 	endpoint "driver/pkg/endpoint"
-	pb "driver/pkg/grpc/pb"
 	grpc "github.com/go-kit/kit/transport/grpc"
 	context1 "golang.org/x/net/context"
+	"pkg/pb"
 )
 
 // makeGetDriverInfoHandler creates the handler logic
@@ -20,7 +19,7 @@ func makeGetDriverInfoHandler(endpoints endpoint.Endpoints, options []grpc.Serve
 func decodeGetDriverInfoRequest(_ context.Context, r interface{}) (interface{}, error) {
 	req :=r.(*pb.GetDriverInfoRequest)
 	return endpoint.GetDriverInfoRequest{
-		Req: &driver.DriverInfoRequest{
+		Req: &pb.GetDriverInfoRequest{
 			Username: req.GetUsername(),
 			Password: req.GetPassword(),
 		},
@@ -58,7 +57,7 @@ func makeTakeOrderHandler(endpoints endpoint.Endpoints, options []grpc.ServerOpt
 func decodeTakeOrderRequest(_ context.Context, r interface{}) (interface{}, error) {
 	req := r.(*pb.TakeOrderRequest)
 	return endpoint.TakeOrderRequest{
-		Req: &driver.TakeOrderRequest{
+		Req: &pb.TakeOrderRequest{
 			DriverId:   req.GetDriverId(),
 			DriverName: req.GetDriverName(),
 			Location:   req.GetLocation(),
