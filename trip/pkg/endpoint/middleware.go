@@ -6,7 +6,6 @@ import (
 	endpoint "github.com/go-kit/kit/endpoint"
 	log "github.com/go-kit/kit/log"
 	metrics "github.com/go-kit/kit/metrics"
-	"github.com/opentracing/opentracing-go"
 	"time"
 	"trip/pkg/config"
 )
@@ -45,17 +44,6 @@ func CountingMiddleware(count metrics.Counter) endpoint.Middleware {
 			defer func(begin time.Time) {
 				count.With(config.System+"_counter", fmt.Sprint(err == nil)).Add(1)
 			}(time.Now())
-			return next(ctx, request)
-		}
-	}
-}
-
-func TracingMiddle() endpoint.Middleware {
-	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			parentSpan := opentracing.SpanFromContext(ctx)
-			childSpan := parentSpan.Tracer().StartSpan("service.trip", opentracing.ChildOf(parentSpan.Context()))
-			defer childSpan.Finish()
 			return next(ctx, request)
 		}
 	}

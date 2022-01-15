@@ -5,12 +5,13 @@ import (
 	endpoint1 "github.com/go-kit/kit/endpoint"
 	log "github.com/go-kit/kit/log"
 	opentracing "github.com/go-kit/kit/tracing/opentracing"
+	"github.com/go-kit/kit/tracing/zipkin"
 	grpc "github.com/go-kit/kit/transport/grpc"
 	http "github.com/go-kit/kit/transport/http"
 	group "github.com/oklog/oklog/pkg/group"
-	opentracinggo "github.com/opentracing/opentracing-go"
 	endpoint "notification/pkg/endpoint"
 	http1 "notification/pkg/http"
+	"pkg/tracing"
 )
 
 func createService(endpoints endpoint.Endpoints) (g *group.Group) {
@@ -19,17 +20,17 @@ func createService(endpoints endpoint.Endpoints) (g *group.Group) {
 	initGRPCHandler(endpoints, g)
 	return g
 }
-func defaultHttpOptions(logger log.Logger, tracer opentracinggo.Tracer) map[string][]http.ServerOption {
+func defaultHttpOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]http.ServerOption {
 	options := map[string][]http.ServerOption{
-		"NoticeBill": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "NoticeBill", logger))},
-		"NoticeTrip": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "NoticeTrip", logger))},
+		"NoticeBill": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "NoticeBill", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)},
+		"NoticeTrip": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "NoticeTrip", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)},
 	}
 	return options
 }
-func defaultGRPCOptions(logger log.Logger, tracer opentracinggo.Tracer) map[string][]grpc.ServerOption {
+func defaultGRPCOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]grpc.ServerOption {
 	options := map[string][]grpc.ServerOption{
-		"NoticeBill": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "NoticeBill", logger))},
-		"NoticeTrip": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "NoticeTrip", logger))},
+		"NoticeBill": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "NoticeBill", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
+		"NoticeTrip": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "NoticeTrip", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
 	}
 	return options
 }

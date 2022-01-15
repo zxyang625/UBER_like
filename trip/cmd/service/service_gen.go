@@ -5,10 +5,11 @@ import (
 	endpoint1 "github.com/go-kit/kit/endpoint"
 	log "github.com/go-kit/kit/log"
 	opentracing "github.com/go-kit/kit/tracing/opentracing"
+	"github.com/go-kit/kit/tracing/zipkin"
 	grpc "github.com/go-kit/kit/transport/grpc"
 	http "github.com/go-kit/kit/transport/http"
 	group "github.com/oklog/oklog/pkg/group"
-	opentracinggo "github.com/opentracing/opentracing-go"
+	"pkg/tracing"
 	endpoint "trip/pkg/endpoint"
 	http1 "trip/pkg/http"
 	service "trip/pkg/service"
@@ -20,12 +21,12 @@ func createService(endpoints endpoint.Endpoints) (g *group.Group) {
 	initGRPCHandler(endpoints, g)
 	return g
 }
-func defaultHttpOptions(logger log.Logger, tracer opentracinggo.Tracer) map[string][]http.ServerOption {
-	options := map[string][]http.ServerOption{"GenTrip": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "GenTrip", logger))}}
+func defaultHttpOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]http.ServerOption {
+	options := map[string][]http.ServerOption{"GenTrip": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "GenTrip", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)}}
 	return options
 }
-func defaultGRPCOptions(logger log.Logger, tracer opentracinggo.Tracer) map[string][]grpc.ServerOption {
-	options := map[string][]grpc.ServerOption{"GenTrip": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GenTrip", logger))}}
+func defaultGRPCOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]grpc.ServerOption {
+	options := map[string][]grpc.ServerOption{"GenTrip": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GenTrip", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)}}
 	return options
 }
 func addDefaultServiceMiddleware(logger log.Logger, mw []service.Middleware) []service.Middleware {

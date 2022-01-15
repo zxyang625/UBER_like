@@ -5,12 +5,13 @@ import (
 	endpoint1 "github.com/go-kit/kit/endpoint"
 	log "github.com/go-kit/kit/log"
 	opentracing "github.com/go-kit/kit/tracing/opentracing"
+	"github.com/go-kit/kit/tracing/zipkin"
 	grpc "github.com/go-kit/kit/transport/grpc"
 	http "github.com/go-kit/kit/transport/http"
 	group "github.com/oklog/oklog/pkg/group"
-	opentracinggo "github.com/opentracing/opentracing-go"
 	endpoint "passenger/pkg/endpoint"
 	http1 "passenger/pkg/http"
+	"pkg/tracing"
 )
 
 func createService(endpoints endpoint.Endpoints) (g *group.Group) {
@@ -19,17 +20,19 @@ func createService(endpoints endpoint.Endpoints) (g *group.Group) {
 	initGRPCHandler(endpoints, g)
 	return g
 }
-func defaultHttpOptions(logger log.Logger, tracer opentracinggo.Tracer) map[string][]http.ServerOption {
+											//TODO:
+func defaultHttpOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]http.ServerOption {
 	options := map[string][]http.ServerOption{
-		"GetPassengerInfo": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "GetPassengerInfo", logger))},
-		"PublishOrder":     {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "PublishOrder", logger))},
+		"GetPassengerInfo": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "GetPassengerInfo", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)},
+		"PublishOrder":     {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "PublishOrder", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)},
 	}
 	return options
 }
-func defaultGRPCOptions(logger log.Logger, tracer opentracinggo.Tracer) map[string][]grpc.ServerOption {
+func defaultGRPCOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]grpc.ServerOption {
 	options := map[string][]grpc.ServerOption{
-		"GetPassengerInfo": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GetPassengerInfo", logger))},
-		"PublishOrder":     {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "PublishOrder", logger))},
+		//TODO:
+		"GetPassengerInfo": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "server_GetPassengerInfo", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
+		"PublishOrder":     {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "server_PublishOrder", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
 	}
 	return options
 }

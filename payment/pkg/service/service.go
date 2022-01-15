@@ -4,6 +4,7 @@ import (
 	"context"
 	"pkg/dao/models"
 	Err "pkg/error"
+
 )
 
 // PaymentService describes the service.
@@ -16,11 +17,6 @@ type basicPaymentService struct {
 }
 
 func (b *basicPaymentService) Pay(ctx context.Context, billNum int64, accountNum int64, payPassword string) (msg string, err error) {
-	// 1. 根据订单号查找订单金额
-	// 2. 获取根据accountNum查找对应账户
-	// 3. 验证密码和表中是否一致
-	// 4. 检测账上余额是否大于订单金额
-	// 5. 如果是则执行事务，并将订单的payed改为true
 	account, err := models.GetAccount(accountNum, payPassword)
 	if err != nil {
 		return "GetAccount fail", err
@@ -29,13 +25,11 @@ func (b *basicPaymentService) Pay(ctx context.Context, billNum int64, accountNum
 	if err != nil {
 		return "GetBill fail", err
 	}
-	//parentSpan := opentracing.SpanFromContext(ctx)
-	//childSpan := parentSpan.Tracer().StartSpan("mysql", opentracing.ChildOf(parentSpan.Context()))
-	//defer childSpan.Finish()
 	resp, err := TxPay(ctx, account, bill)
 	if err != nil {
 		return "fail", err
 	}
+
 	return resp, err
 }
 

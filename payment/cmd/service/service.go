@@ -3,6 +3,9 @@ package service
 import (
 	"flag"
 	"fmt"
+	"github.com/go-kit/kit/tracing/zipkin"
+	grpc2 "github.com/go-kit/kit/transport/grpc"
+	opentracinggo "github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	log "log"
 	"net"
@@ -25,12 +28,12 @@ import (
 	kitendpoint "github.com/go-kit/kit/endpoint"
 	kitlog "github.com/go-kit/kit/log"
 	group "github.com/oklog/oklog/pkg/group"
-	opentracinggo "github.com/opentracing/opentracing-go"
 	promhttp "github.com/prometheus/client_golang/prometheus/promhttp"
 	grpc1 "google.golang.org/grpc"
 )
 
-var tracer opentracinggo.Tracer
+//var tracer opentracinggo.Tracer
+var tracer *tracing.TracingImpl
 var logger kitlog.Logger
 
 var fs = flag.NewFlagSet("Payment", flag.ExitOnError)
@@ -46,22 +49,20 @@ func Run() {
 	fs.Parse(os.Args[1:])
 
 	logger = config.GetKitLogger()
-	var err error
-	tracingImpl := &tracing.TracingImpl{}
+
 	if *zipkinURL != "" {
 		logger.Log("tracer", "Zipkin", "URL", *zipkinURL)
-		tracingImpl, err = tracing.NewOpenTracingTracer(*serviceName)
+		tracingImpl, err := tracing.NewOpenTracingTracer(*serviceName)
 		if err != nil {
 			logger.Log("new zipkin tracer", "failed")
 			os.Exit(-1)
 		}
-		tracer = tracingImpl.Tracer
-		//defer tracingImpl.Reporter.Close()
-	}  else {
+		tracer = tracingImpl
+		defer tracingImpl.Reporter.Close()
+	} else {
 		logger.Log("tracer", "none")
-		tracer = opentracinggo.GlobalTracer()
+		tracer.Tracer = opentracinggo.GlobalTracer()
 	}
-	defer tracingImpl.Reporter.Close()
 	/////////////////////////////////////////////////
 	discoverClient, err := discover.NewDiscoverClient(*consulAddr, *consulPort, true)
 	if err != nil {
@@ -111,7 +112,7 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]kitendpoint.Mi
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodPay, "Pay histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodPay, "Pay count")),
-			endpoint.TracingMiddle(config.MethodPay),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodPay + "_zipkin"),
 		},
 	}
 
@@ -156,7 +157,7 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 	}
 	g.Add(func() error {
 		logger.Log("transport", "gRPC", "addr", *grpcAddr)
-		baseServer := grpc1.NewServer()
+		baseServer := grpc1.NewServer(grpc1.UnaryInterceptor(grpc2.Interceptor))
 		pb.RegisterPaymentServer(baseServer, grpcServer)
 		grpc_health_v1.RegisterHealthServer(baseServer, &discover.HealthImpl{})
 		return baseServer.Serve(grpcListener)

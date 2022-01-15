@@ -3,6 +3,8 @@ package service
 import (
 	"flag"
 	"fmt"
+	"github.com/go-kit/kit/tracing/zipkin"
+	grpc2 "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"log"
 	"net"
@@ -30,7 +32,7 @@ import (
 	grpc1 "google.golang.org/grpc"
 )
 
-var tracer opentracinggo.Tracer
+var tracer *tracing.TracingImpl
 var logger kitlog.Logger
 
 var fs = flag.NewFlagSet("trip", flag.ExitOnError)
@@ -54,11 +56,11 @@ func Run() {
 			logger.Log("new zipkin tracer", "failed")
 			os.Exit(-1)
 		}
-		tracer = tracingImpl.Tracer
+		tracer = tracingImpl
 		defer tracingImpl.Reporter.Close()
 	} else {
 		logger.Log("tracer", "none")
-		tracer = opentracinggo.GlobalTracer()
+		tracer.Tracer = opentracinggo.GlobalTracer()
 	}
 	/////////////////////////////////////////////////
 	discoverClient, err := discover.NewDiscoverClient(*consulAddr, *consulPort, true)
@@ -111,7 +113,8 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGenTrip, "GenTrip histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGenTrip, "GenTrip count")),
-			endpoint.TracingMiddle(),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGenTrip+"_zipkin"),
+
 		},
 	}
 
@@ -156,7 +159,7 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 	}
 	g.Add(func() error {
 		logger.Log("transport", "gRPC", "addr", *grpcAddr)
-		baseServer := grpc1.NewServer()
+		baseServer := grpc1.NewServer(grpc1.UnaryInterceptor(grpc2.Interceptor))
 		pb.RegisterTripServer(baseServer, grpcServer)
 		grpc_health_v1.RegisterHealthServer(baseServer, &discover.HealthImpl{})
 		return baseServer.Serve(grpcListener)

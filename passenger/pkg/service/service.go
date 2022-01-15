@@ -5,11 +5,15 @@ import (
 	grpc1 "driver/client/grpc"
 	"encoding/json"
 	"fmt"
+	kitzipkin "github.com/go-kit/kit/tracing/zipkin"
 	grpc2 "github.com/go-kit/kit/transport/grpc"
+	zipkingo "github.com/openzipkin/zipkin-go"
+	"github.com/openzipkin/zipkin-go/reporter/http"
 	"google.golang.org/grpc"
 	"log"
 	"pkg/dao/models"
 	"pkg/pb"
+	"pkg/tracing"
 )
 
 // PassengerService describes the service.
@@ -45,23 +49,21 @@ func (b *basicPassengerService) PublishOrder(ctx context.Context, req *pb.Publis
 		return
 	}
 	defer conn.Close()
-	//reporter := http.NewReporter(tracing.DefaultZipkinURL)
-	//defer reporter.Close()
-	//zkTracer, err := zipkingo.NewTracer(reporter)
-	//if err != nil {
-	//	log.Printf("New GRPC TracingImpl failed, err: %v", err)
-	//	return
-	//}
-	//zkClientTrace := kitzipkin.GRPCClientTrace(zkTracer)
-	svc, err := grpc1.New(conn, map[string][]grpc2.ClientOption{
-		//"TakeOrder" : {zkClientTrace},
-	})
-	//opentracing.StartSpanFromContextWithTracer(ctx, zipkin.TraceEndpoint())
+	reporter := http.NewReporter(tracing.DefaultZipkinURL)
+	defer reporter.Close()
+	zkTracer, err := zipkingo.NewTracer(reporter)
 	if err != nil {
-		log.Println("2", err)
+		log.Printf("New GRPC TracingImpl failed, err: %v", err)
 		return
 	}
+	zkClientTrace := kitzipkin.GRPCClientTrace(zkTracer)
+	svc, err := grpc1.New(conn, map[string][]grpc2.ClientOption{
+		"TakeOrder" : {zkClientTrace},
+	})
 	resp1, err := svc.TakeOrder(ctx, &pb.TakeOrderRequest{})
+	if err != nil {
+		return nil, err
+	}
 	log.Println("resp1", resp1.StartTime)
 	resp = &pb.PublishOrderReply{
 		Status:     true,

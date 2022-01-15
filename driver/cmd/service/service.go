@@ -8,6 +8,8 @@ import (
 	service "driver/pkg/service"
 	"flag"
 	"fmt"
+	"github.com/go-kit/kit/tracing/zipkin"
+	grpc2 "github.com/go-kit/kit/transport/grpc"
 	"log"
 	"net"
 	http2 "net/http"
@@ -31,7 +33,7 @@ import (
 	grpc1 "google.golang.org/grpc"
 )
 
-var tracer opentracinggo.Tracer
+var tracer *tracing.TracingImpl
 var logger kitlog.Logger
 
 var fs = flag.NewFlagSet("driver", flag.ExitOnError)
@@ -55,11 +57,11 @@ func Run() {
 			logger.Log("new zipkin tracer", "failed")
 			os.Exit(-1)
 		}
-		tracer = tracingImpl.Tracer
+		tracer = tracingImpl
 		defer tracingImpl.Reporter.Close()
 	} else {
 		logger.Log("tracer", "none")
-		tracer = opentracinggo.GlobalTracer()
+		tracer.Tracer = opentracinggo.GlobalTracer()
 	}
 	/////////////////////////////////////////////////
 	discoverClient, err := discover.NewDiscoverClient(*consulAddr, *consulPort, true)
@@ -112,13 +114,13 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGetDriverInfo, "GetDriverInfo histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGetDriverInfo, "GetDriverInfo count")),
-			endpoint.TracingMiddle(config.MethodGetDriverInfo),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetDriverInfo+"_zipkin"),
 		},
 		"TakeOrder": {
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodTakeOrder, "TakeOrder histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodTakeOrder, "TakeOrder count")),
-			endpoint.TracingMiddle(config.MethodTakeOrder),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodTakeOrder+"_zipkin"),
 		},
 	}
 
@@ -163,7 +165,7 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 	}
 	g.Add(func() error {
 		logger.Log("transport", "gRPC", "addr", *grpcAddr)
-		baseServer := grpc1.NewServer()
+		baseServer := grpc1.NewServer(grpc1.UnaryInterceptor(grpc2.Interceptor))
 		pb.RegisterDriverServer(baseServer, grpcServer)
 		grpc_health_v1.RegisterHealthServer(baseServer, &discover.HealthImpl{})
 		return baseServer.Serve(grpcListener)

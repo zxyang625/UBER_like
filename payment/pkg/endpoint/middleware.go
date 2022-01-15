@@ -3,15 +3,11 @@ package endpoint
 import (
 	"context"
 	"fmt"
-	"github.com/opentracing/opentracing-go"
-	"github.com/openzipkin/zipkin-go"
-	"github.com/openzipkin/zipkin-go/model"
+	endpoint "github.com/go-kit/kit/endpoint"
+	kitlog "github.com/go-kit/kit/log"
+	metrics "github.com/go-kit/kit/metrics"
 	"payment/pkg/config"
 	"time"
-
-	endpoint "github.com/go-kit/kit/endpoint"
-	log "github.com/go-kit/kit/log"
-	metrics "github.com/go-kit/kit/metrics"
 )
 
 // InstrumentingMiddleware returns an endpoint middleware that records
@@ -42,7 +38,7 @@ func CountingMiddleware(count metrics.Counter) endpoint.Middleware {
 
 // LoggingMiddleware returns an endpoint middleware that logs the
 // duration of each invocation, and the resulting error, if any.
-func LoggingMiddleware(logger log.Logger) endpoint.Middleware {
+func LoggingMiddleware(logger kitlog.Logger) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			defer func(begin time.Time) {
@@ -53,30 +49,3 @@ func LoggingMiddleware(logger log.Logger) endpoint.Middleware {
 	}
 }
 
-func TracingMiddle(methodName string) endpoint.Middleware {
-	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			parentSpan := opentracing.SpanFromContext(ctx)
-			childSpan := parentSpan.Tracer().StartSpan("service." + methodName, opentracing.ChildOf(parentSpan.Context()))
-			defer childSpan.Finish()
-			return next(ctx, request)
-		}
-	}
-}
-
-
-func TraceEndpoint(tracer *zipkin.Tracer, name string) endpoint.Middleware {
-	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, request interface{}) (interface{}, error) {
-			var sc model.SpanContext
-			if parentSpan := zipkin.SpanFromContext(ctx); parentSpan != nil {
-				sc = parentSpan.Context()
-			}
-			sp := tracer.StartSpan(name, zipkin.Parent(sc))
-			defer sp.Finish()
-
-			ctx = zipkin.NewContext(ctx, sp)
-			return next(ctx, request)
-		}
-	}
-}

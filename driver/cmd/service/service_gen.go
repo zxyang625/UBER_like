@@ -7,10 +7,11 @@ import (
 	endpoint1 "github.com/go-kit/kit/endpoint"
 	log "github.com/go-kit/kit/log"
 	opentracing "github.com/go-kit/kit/tracing/opentracing"
+	"github.com/go-kit/kit/tracing/zipkin"
 	grpc "github.com/go-kit/kit/transport/grpc"
 	http "github.com/go-kit/kit/transport/http"
 	group "github.com/oklog/oklog/pkg/group"
-	opentracinggo "github.com/opentracing/opentracing-go"
+	"pkg/tracing"
 )
 
 func createService(endpoints endpoint.Endpoints) (g *group.Group) {
@@ -19,17 +20,17 @@ func createService(endpoints endpoint.Endpoints) (g *group.Group) {
 	initGRPCHandler(endpoints, g)
 	return g
 }
-func defaultHttpOptions(logger log.Logger, tracer opentracinggo.Tracer) map[string][]http.ServerOption {
+func defaultHttpOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]http.ServerOption {
 	options := map[string][]http.ServerOption{
-		"GetDriverInfo": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "GetDriverInfo", logger))},
-		"TakeOrder":     {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "TakeOrder", logger))},
+		"GetDriverInfo": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "GetDriverInfo", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)},
+		"TakeOrder":     {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "TakeOrder", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)},
 	}
 	return options
 }
-func defaultGRPCOptions(logger log.Logger, tracer opentracinggo.Tracer) map[string][]grpc.ServerOption {
+func defaultGRPCOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]grpc.ServerOption {
 	options := map[string][]grpc.ServerOption{
-		"GetDriverInfo": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GetDriverInfo", logger))},
-		"TakeOrder":     {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "TakeOrder", logger))},
+		"GetDriverInfo": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GetDriverInfo", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
+		"TakeOrder":     {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "TakeOrder", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
 	}
 	return options
 }

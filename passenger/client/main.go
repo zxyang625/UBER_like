@@ -86,9 +86,6 @@ func main() {
 			log.Println("2", err)
 			return
 		}
-		parentSpan := zkTracer.StartSpan("Passenger")
-		defer parentSpan.Finish()
-		ctx := zipkingo.NewContext(context.Background(), parentSpan)
 		data := &pb.PublishOrderRequest{
 			PassengerId:   3124,
 			StartTime:     052,
@@ -98,11 +95,14 @@ func main() {
 		}
 		//childSpan := zkTracer.StartSpan("childSpan", zipkingo.Parent(parentSpan.Context()))
 		//ctx1 := zipkingo.NewContext(ctx, parentSpan)
+		parentSpan := zkTracer.StartSpan("Passenger_request")
+		ctx := zipkingo.NewContext(context.Background(), parentSpan)
 		r2, err := svc2.PublishOrder(ctx, data)
 		if err != nil {
 			log.Println(err)
 			return
 		}
+		parentSpan.Finish()
 		fmt.Println(r2.GetCar(), r2.GetPath())
 		//childSpan.Finish()
 	}

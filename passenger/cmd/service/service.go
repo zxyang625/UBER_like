@@ -3,6 +3,8 @@ package service
 import (
 	"flag"
 	"fmt"
+	"github.com/go-kit/kit/tracing/zipkin"
+	grpc2 "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"log"
 	"net"
@@ -29,8 +31,8 @@ import (
 	promhttp "github.com/prometheus/client_golang/prometheus/promhttp"
 	grpc1 "google.golang.org/grpc"
 )
-
-var tracer opentracinggo.Tracer
+//TODO:
+var tracer *tracing.TracingImpl
 var logger kitlog.Logger
 
 var fs = flag.NewFlagSet("passenger", flag.ExitOnError)
@@ -47,18 +49,19 @@ func Run() {
 
 	logger = config.GetKitLogger()
 
+	//TODO:
 	if *zipkinURL != "" {
-		logger.Log("tracer", "Zipkin", "URL", *zipkinURL)
+			logger.Log("tracer", "Zipkin", "URL", *zipkinURL)
 		tracingImpl, err := tracing.NewOpenTracingTracer(*serviceName)
 		if err != nil {
 			logger.Log("new zipkin tracer", "failed")
 			os.Exit(-1)
 		}
-		tracer = tracingImpl.Tracer
+		tracer = tracingImpl
 		defer tracingImpl.Reporter.Close()
 	} else {
 		logger.Log("tracer", "none")
-		tracer = opentracinggo.GlobalTracer()
+		tracer.Tracer = opentracinggo.GlobalTracer()
 	}
 
 	/////////////////////////////////////
@@ -111,13 +114,14 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGetPassengerInfo, "GetPassengerInfo histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGetPassengerInfo, "GetPassengerInfo count")),
-			endpoint.TracingMiddle(config.MethodGetPassengerInfo),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetPassengerInfo + "_zipkin"),
 		},
 		"PublishOrder": {
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodPublishOrder, "PublishOrder histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodPublishOrder, "PublishOrder count")),
-			endpoint.TracingMiddle(config.MethodPublishOrder),
+			//TODO
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodPublishOrder + "_zipkin"),
 		},
 	}
 
@@ -162,7 +166,8 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 	}
 	g.Add(func() error {
 		logger.Log("transport", "gRPC", "addr", *grpcAddr)
-		baseServer := grpc1.NewServer()
+		//TODO:
+		baseServer := grpc1.NewServer(grpc1.UnaryInterceptor(grpc2.Interceptor))
 		pb.RegisterPassengerServer(baseServer, grpcServer)
 		grpc_health_v1.RegisterHealthServer(baseServer, &discover.HealthImpl{})
 		return baseServer.Serve(grpcListener)
