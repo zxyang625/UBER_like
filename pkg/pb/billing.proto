@@ -1,0 +1,49 @@
+syntax = "proto3";
+package pb;
+import "trip.proto";
+
+service Billing {
+  rpc GenBill(GenBillRequest) returns (GenBillReply);
+  rpc GetBillList(GetBillListRequest) returns (GetBillListReply);
+  rpc GetBill(GetBillRequest) returns (GetBillReply);
+}
+
+message BillMsg {
+  int64 bill_num = 1;
+  float price = 2;
+  int64 start_time = 3;
+  int64 end_time = 4;
+  string origin = 5;
+  string destination = 6;
+  string passenger_name = 7;
+  string driver_name = 8;
+  bool payed = 9;
+  int64 passenger_id = 10;
+  int64 driver_id = 11;
+}
+
+message GenBillRequest {
+  TripMsg trip_msg = 1;
+}
+
+message GenBillReply {
+  bool status = 1;
+  BillMsg bill_msg = 2;
+}
+
+message GetBillRequest {
+  int64 bill_num = 1;
+}
+
+message GetBillReply {
+  bool status = 1;
+  BillMsg bill_msg = 2;
+}
+
+message GetBillListRequest {
+  int64 user_id = 1;
+}
+
+message GetBillListReply {
+  repeated BillMsg bill_list= 1;
+}

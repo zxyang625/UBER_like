@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package pb;
+
+import "trip.proto";
+import "billing.proto";
+
+service Notification {
+ rpc NoticeTrip (NoticeTripRequest) returns (NoticeTripReply);
+ rpc NoticeBill (NoticeBillRequest) returns (NoticeBillReply);
+}
+
+message NoticeTripRequest {
+ TripMsg trip_msg = 1;
+}
+
+message NoticeTripReply {
+ bool   status = 1;
+ string msg    = 2;
+}
+
+message NoticeBillRequest {
+ BillMsg bill_msg = 1;
+}
+
+message NoticeBillReply {
+ bool   status = 1;
+ string msg    = 2;
+}
+
