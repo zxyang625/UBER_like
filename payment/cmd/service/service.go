@@ -17,6 +17,7 @@ import (
 	grpc "payment/pkg/grpc"
 	http1 "payment/pkg/http"
 	service "payment/pkg/service"
+	"pkg/dao/mq"
 	"pkg/discover"
 	pb "pkg/pb"
 	"pkg/promtheus"
@@ -74,6 +75,11 @@ func Run() {
 	defer discoverClient.DeRegister(instanceID, logger)
 	if !ok {
 		log.Printf("service %s register failed", *serviceName)
+		os.Exit(-1)
+	}
+	err = service.InitMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "billing_mq"))
+	if err != nil {
+		logger.Log("InitMessageServer", "fail", "err", err)
 		os.Exit(-1)
 	}
 	////////////////////////////////////////////

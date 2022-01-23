@@ -41,7 +41,8 @@ func New(conn *grpc.ClientConn, options map[string][]grpc1.ClientOption) (servic
 // encodeGenBillRequest is a transport/grpc.EncodeRequestFunc that converts a
 //  user-domain GenBill request to a gRPC request.
 func encodeGenBillRequest(_ context.Context, request interface{}) (interface{}, error) {
-	return nil, errors.New("'Billing' Encoder is not impelemented")
+	_ = request.(endpoint1.GenBillRequest)
+	return &pb.GenBillRequest{}, nil
 }
 
 // decodeGenBillResponse is a transport/grpc.DecodeResponseFunc that converts

@@ -43,6 +43,7 @@ func (b *basicPassengerService) PublishOrder(ctx context.Context, req *pb.Publis
 	if err != nil {
 		return nil, err
 	}
+
 	err = PassengerMessageServer.Publish(ctx, PublishQueueName, data)
 	if err != nil {
 		return nil, err

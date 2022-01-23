@@ -64,7 +64,7 @@ func main() {
 			return
 		}
 		zkClientTrace := kitzipkin.GRPCClientTrace(zkTracer)
-		conn, err := grpc.Dial("127.0.0.1:8082", grpc.WithInsecure())
+		conn, err := grpc.Dial("127.0.0.1:8052", grpc.WithInsecure())
 		if err != nil {
 			log.Println("1", err)
 			return
@@ -80,7 +80,7 @@ func main() {
 		parentSpan := zkTracer.StartSpan("Pay")
 		defer parentSpan.Finish()
 		ctx := zipkingo.NewContext(context.Background(), parentSpan)
-		r2, err := svc2.Pay(ctx, 1, 1, "qwer")
+		r2, err := svc2.Pay(ctx, 209757, 1, "qwer")
 		if err != nil {
 			fmt.Println("3", err)
 			return

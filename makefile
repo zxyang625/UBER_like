@@ -2,7 +2,6 @@
 prometheus_path := "E:/Download/prometheus-2.32.1.windows-amd64/prometheus-2.32.1.windows-amd64"
 zipkin_path := "E:/Download/Zipkin"
 project_path := "C:/Program Files/GoLand/Projects/UBER"
-export GOROOT = "C:/Program Files/GoLand/Projects/UBER"
 consul:
 	consul agent -dev
 

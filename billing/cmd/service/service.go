@@ -84,6 +84,11 @@ func Run() {
 		logger.Log("InitMessageServer", "fail", "err", err)
 		os.Exit(-1)
 	}
+	err = service.InitPaySendRespMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "billing_mq"))
+	if err != nil {
+		logger.Log("InitPaySendRespMessageServer", "fail", "err", err)
+		os.Exit(-1)
+	}
 	go service.RecvAndGenBill(context.Background(), logger)	//这里构建监听服务
 	////////////////////////////////////////////
 	svc := service.New(getServiceMiddleware(logger))

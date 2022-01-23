@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"github.com/go-kit/kit/log"
 	"github.com/golang/protobuf/proto"
 	"github.com/streadway/amqp"
+	"math"
 	"math/rand"
 	"pkg/dao/models"
 	"pkg/dao/redis"
@@ -99,18 +101,31 @@ func New(middleware []Middleware) BillingService {
 
 func RecvAndGenBill(ctx context.Context, logger log.Logger) {
 	go func(context.Context) {
-		BillingMessageServer.Consume(ctx, ConsumeQueueName, func(d amqp.Delivery) {
-			r := &pb.BillMsg{}
+		BillingMessageServer.Consume(ctx, ConsumeTripQueueName, func(d amqp.Delivery) {
+			r := &pb.TripMsg{}
 			err := proto.Unmarshal(d.Body, r)
 			if err != nil {
-				logger.Log("consume", ConsumeQueueName, "err", err)
+				logger.Log("consume", ConsumeTripQueueName, "err", err)
 				return
 			}
-			err = redis.Billing{}.LPUSH(r)
+			err = redis.Billing{}.LPUSH(&pb.BillMsg{
+				BillNum:              0,
+				Price:                rand.Float32(),		//价格随机计算
+				StartTime:            r.GetStartTime(),
+				EndTime:              r.GetEndTime(),
+				Origin:               r.GetOrigin(),
+				Destination:          r.GetDestination(),
+				PassengerName:        r.GetPassengerName(),
+				DriverName:           r.GetDriverName(),
+				Payed:                false,
+				PassengerId:          r.GetPassengerId(),
+				DriverId:             r.GetDriverId(),
+			})
 			if err != nil {
 				logger.Log("method", "LPUSH", "name", "bill_list", "err", err)
 				return
 			}
+			logger.Log("method", "consume", "name", ConsumeTripQueueName, "err", "null")
 			d.Ack(false)
 
 			//err = TripRespMessageServer.SendResp(ctx, d.ReplyTo, d.CorrelationId, []byte("send trip success"))
@@ -118,6 +133,25 @@ func RecvAndGenBill(ctx context.Context, logger log.Logger) {
 			//	logger.Log("method", "SendResp", "err", err)
 			//	return
 			//}
+		})
+	}(ctx)
+
+	go func(context.Context) {
+		BillingMessageServer.Consume(ctx, ConsumePayQueueName, func(d amqp.Delivery) {
+			billNum := int64(binary.BigEndian.Uint64(d.Body))
+			price, err := models.SetPayedAndGetPrice(billNum)
+			if err != nil {
+				logger.Log("method", "SetPayedAndGetPrice", "err", err)
+				return
+			}
+			bits := math.Float32bits(price)
+			data := make([]byte, 4)
+			binary.LittleEndian.PutUint32(data, bits)
+			err = PayRespMessageServer.SendResp(ctx, d.ReplyTo, d.CorrelationId, data)
+			if err != nil {
+				logger.Log("method", "SendResp", "err", err)
+				return
+			}
 		})
 	}(ctx)
 

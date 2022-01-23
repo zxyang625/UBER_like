@@ -48,3 +48,16 @@ func DelBill(billNum int64) (err error) {
 	err = db.Delete(&Bill{BillNum: billNum}).Error
 	return
 }
+
+func SetPayedAndGetPrice(billNum int64) (float32, error) {
+	err := db.Model(&Bill{}).Where("bill_num = ?", billNum).Update("payed", true).Error
+	if err != nil {
+		return 0, err
+	}
+	bill := &Bill{}
+	err = db.Model(&Bill{}).Select("price").Where("bill_num = ?", billNum).First(bill).Error
+	if err != nil {
+		return 0, err
+	}
+	return bill.Price, nil
+}

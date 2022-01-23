@@ -84,6 +84,7 @@ func RecvReqAndPushTrip(ctx context.Context, logger log.Logger) {
 				return
 			}
 			d.Ack(false)
+			logger.Log("method", "consume", "name", ConsumePassengerName, "err", "null")
 
 			//go func() {
 				resp1 := &pb.PublishOrderReply{
@@ -118,7 +119,7 @@ func RecvReqAndPushTrip(ctx context.Context, logger log.Logger) {
 				return
 			}
 			d.Ack(false)
-
+			logger.Log("method", "consume", "name", ConsumeDriverName, "err", "null")
 			//go func() {
 				resp2 := &pb.TakeOrderReply{
 					Status: true,
