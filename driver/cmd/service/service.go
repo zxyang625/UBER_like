@@ -78,7 +78,7 @@ func Run() {
 		os.Exit(-1)
 	}
 
-	err = service.InitMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "driver_mq"))
+	err = service.InitMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "driver_msg/"))
 	if err != nil {
 		logger.Log("InitMessageServer", "fail", "err", err)
 		os.Exit(-1)
@@ -121,13 +121,13 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGetDriverInfo, "GetDriverInfo histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGetDriverInfo, "GetDriverInfo count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetDriverInfo+"_zipkin"),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetDriverInfo+"/service"),
 		},
 		"TakeOrder": {
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodTakeOrder, "TakeOrder histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodTakeOrder, "TakeOrder count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodTakeOrder+"_zipkin"),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodTakeOrder+"/service"),
 		},
 	}
 

@@ -114,14 +114,14 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodNoticeTrip, "NoticeTrip histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodNoticeTrip, "NoticeTrip count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodNoticeTrip + "_zipkin"),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodNoticeTrip + "/service"),
 
 		},
 		"NoticeBill": {
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodNoticeBill, "NoticeBill histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodNoticeBill, "NoticeBill count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodNoticeBill + "_zipkin"),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodNoticeBill + "/service"),
 
 		},
 	}

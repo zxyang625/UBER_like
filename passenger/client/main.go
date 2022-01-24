@@ -120,7 +120,7 @@ func main() {
 		//		time.Sleep(time.Second / 100)
 		//	}
 		//}()
-		for i := 0; i < 100000; i++ {
+		//for i := 0; i < 100000; i++ {
 			r2, err := svc2.PublishOrder(ctx, data)
 			if err != nil {
 				log.Println(err)
@@ -128,7 +128,7 @@ func main() {
 			}
 			fmt.Println(r2.GetStatus(), r2.GetMsg())
 			//time.Sleep(time.Second / 1000)
-		}
+		//}
 		//childSpan.Finish()
 	}
 }

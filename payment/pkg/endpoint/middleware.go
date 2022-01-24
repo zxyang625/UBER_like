@@ -6,6 +6,8 @@ import (
 	endpoint "github.com/go-kit/kit/endpoint"
 	kitlog "github.com/go-kit/kit/log"
 	metrics "github.com/go-kit/kit/metrics"
+	"github.com/openzipkin/zipkin-go"
+	"github.com/openzipkin/zipkin-go/model"
 	"payment/pkg/config"
 	"time"
 )
@@ -49,3 +51,31 @@ func LoggingMiddleware(logger kitlog.Logger) endpoint.Middleware {
 	}
 }
 
+func TraceEndpoint(tracer *zipkin.Tracer, name string) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (interface{}, error) {
+			var sc model.SpanContext
+			span := zipkin.SpanOrNoopFromContext(ctx)
+			if span == nil {
+				fmt.Println("nilllllllllllllllllllllllllllllllll")
+			} else {
+				fmt.Printf("%+v\n", span.Context())
+				go func() {
+					traceID := span.Context().TraceID
+					spanID := span.Context().ID
+					span := tracer.StartSpan("this_is_test", zipkin.Parent(model.SpanContext{ID: spanID, TraceID: traceID}))
+					time.Sleep(3 * time.Second)
+					defer span.Finish()
+				}()
+			}
+			if parentSpan := zipkin.SpanFromContext(ctx); parentSpan != nil {
+				sc = parentSpan.Context()
+			}
+			sp := tracer.StartSpan(name, zipkin.Parent(sc))
+			defer sp.Finish()
+
+			ctx = zipkin.NewContext(ctx, sp)
+			return next(ctx, request)
+		}
+	}
+}

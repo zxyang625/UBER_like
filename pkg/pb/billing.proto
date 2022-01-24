@@ -1,6 +1,5 @@
 syntax = "proto3";
 package pb;
-import "trip.proto";
 
 service Billing {
   rpc GenBill(GenBillRequest) returns (GenBillReply);
@@ -23,7 +22,7 @@ message BillMsg {
 }
 
 message GenBillRequest {
-  TripMsg trip_msg = 1;
+  BillMsg bill_msg = 1;
 }
 
 message GenBillReply {

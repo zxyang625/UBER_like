@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"github.com/openzipkin/zipkin-go"
+	"github.com/openzipkin/zipkin-go/model"
 	"github.com/streadway/amqp"
 	"pkg/dao/models"
+	"pkg/dao/mq"
 	Err "pkg/error"
 	"pkg/pb"
 	"time"
@@ -43,8 +46,22 @@ func (b *basicPassengerService) PublishOrder(ctx context.Context, req *pb.Publis
 	if err != nil {
 		return nil, err
 	}
-
-	err = PassengerMessageServer.Publish(ctx, PublishQueueName, data)
+	span := zipkin.SpanOrNoopFromContext(ctx)
+	mqModel := mq.MQModel{
+		Data: data,
+		SpanModel: model.SpanModel{
+			SpanContext:    model.SpanContext{
+				TraceID:  span.Context().TraceID,
+				ID:       span.Context().ID,
+				ParentID: span.Context().ParentID,
+			},
+		},
+	}
+	mqData, err := json.Marshal(mqModel)
+	if err != nil {
+		return nil, err
+	}
+	err = PassengerMessageServer.Publish(ctx, PublishQueueName, mqData)
 	if err != nil {
 		return nil, err
 	}

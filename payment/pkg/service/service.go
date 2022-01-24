@@ -3,9 +3,13 @@ package service
 import (
 	"context"
 	"encoding/binary"
+	"encoding/json"
+	"github.com/openzipkin/zipkin-go"
+	"github.com/openzipkin/zipkin-go/model"
 	"github.com/streadway/amqp"
 	"math"
 	"pkg/dao/models"
+	"pkg/dao/mq"
 	Err "pkg/error"
 	"time"
 )
@@ -26,7 +30,23 @@ func (b *basicPaymentService) Pay(ctx context.Context, billNum int64, accountNum
 	}
 	data := make([]byte, binary.MaxVarintLen64)
 	binary.BigEndian.PutUint64(data, uint64(billNum))
-	err = PayMessageServer.Publish(ctx, PublishQueueName, data)
+	///////////////////////////////////////////
+	span := zipkin.SpanOrNoopFromContext(ctx)
+	mqModel := mq.MQModel{
+		Data: data,
+		SpanModel: model.SpanModel{
+			SpanContext: model.SpanContext{
+			TraceID:  span.Context().TraceID,
+			ID:       span.Context().ID,
+			ParentID: span.Context().ParentID,
+		}},
+	}
+	mqData, err := json.Marshal(mqModel)
+	if err != nil {
+		return "pay fail", err
+	}
+	/////////////////////////////////////////////
+	err = PayMessageServer.Publish(ctx, PublishQueueName, mqData)
 	if err != nil {
 		return "pay fail", err
 	}
@@ -51,7 +71,7 @@ func (b *basicPaymentService) Pay(ctx context.Context, billNum int64, accountNum
 		}
 		return "pay success", nil
 	case <-time.After(time.Second):
-		return "pay fail", Err.New(Err.RPCRequestTimeout, "PublishOrder timeout")
+		return "pay fail", Err.New(Err.RPCRequestTimeout, "pay request timeout")
 	}
 }
 
@@ -68,26 +88,4 @@ func New(middleware []Middleware) PaymentService {
 		svc = m(svc)
 	}
 	return svc
-}
-
-func TxPay(ctx context.Context, account *models.Account, bill *models.Bill) (msg string, err error) {
-	tx := models.GetDB().Begin().WithContext(ctx)
-	if account.Asset < bill.Price {
-		tx.Rollback()
-		return "pay fail", Err.New(Err.MysqlNoEnoughAsset, "no enough asset")
-	}
-	account.Asset -= bill.Price
-	err = models.UpdateAccount(account.AccountNum, account)
-	if err != nil {
-		tx.Rollback()
-		return "UpdateAccount fail", err
-	}
-	bill.Payed = true
-	err = models.UpdateBill(bill.BillNum, bill)
-	if err != nil {
-		tx.Rollback()
-		return "UpdateBill fail", err
-	}
-	tx.Commit()
-	return "pay success", nil
 }

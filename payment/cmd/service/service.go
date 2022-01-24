@@ -77,7 +77,7 @@ func Run() {
 		log.Printf("service %s register failed", *serviceName)
 		os.Exit(-1)
 	}
-	err = service.InitMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "billing_mq"))
+	err = service.InitMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "pay_msg/"))
 	if err != nil {
 		logger.Log("InitMessageServer", "fail", "err", err)
 		os.Exit(-1)
@@ -118,7 +118,7 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]kitendpoint.Mi
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodPay, "Pay histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodPay, "Pay count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodPay + "_zipkin"),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodPay + "/service"),
 		},
 	}
 

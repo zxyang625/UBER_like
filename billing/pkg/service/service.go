@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"github.com/go-kit/kit/log"
 	"github.com/golang/protobuf/proto"
+	"github.com/openzipkin/zipkin-go"
 	"github.com/streadway/amqp"
 	"math"
 	"math/rand"
 	"pkg/dao/models"
+	"pkg/dao/mq"
 	"pkg/dao/redis"
 	"pkg/pb"
 )
@@ -26,27 +28,18 @@ type basicBillingService struct{}
 var defaultBasicBillingService = &basicBillingService{}
 
 func (b *basicBillingService) GenBill(ctx context.Context, req *pb.GenBillRequest) (resp *pb.GenBillReply, err error) {
-	billData, err := redis.Billing{}.BRPOPData()
-	if err != nil {
-		return nil, err
-	}
-	bill := &pb.BillMsg{}
-	err = proto.Unmarshal(billData, bill)
-	if err != nil {
-		return nil, err
-	}
 	bill1 := &models.Bill{
 		BillNum:       0,
 		Price:         rand.Float32(),
-		StartTime:     bill.GetStartTime(),
-		EndTime:       bill.GetEndTime(),
-		Origin:        bill.GetOrigin(),
-		Destination:   bill.GetDestination(),
-		PassengerName: bill.GetPassengerName(),
-		DriverName:    bill.GetDriverName(),
+		StartTime:     req.BillMsg.GetStartTime(),
+		EndTime:       req.BillMsg.GetEndTime(),
+		Origin:        req.BillMsg.GetOrigin(),
+		Destination:   req.BillMsg.GetDestination(),
+		PassengerName: req.BillMsg.GetPassengerName(),
+		DriverName:    req.BillMsg.GetDriverName(),
 		Payed:         false,
-		PassengerId:   bill.GetPassengerId(),
-		DriverId:      bill.GetDriverId(),
+		PassengerId:   req.BillMsg.GetPassengerId(),
+		DriverId:      req.BillMsg.GetDriverId(),
 	}
 	err = models.AddBill(bill1)
 	if err != nil {
@@ -99,15 +92,24 @@ func New(middleware []Middleware) BillingService {
 	return svc
 }
 
-func RecvAndGenBill(ctx context.Context, logger log.Logger) {
-	go func(context.Context) {
-		BillingMessageServer.Consume(ctx, ConsumeTripQueueName, func(d amqp.Delivery) {
+func RecvAndGenBill(ctx context.Context, logger log.Logger, tracer *zipkin.Tracer) {
+	go func(*zipkin.Tracer) {
+		deliverServer := mq.InitDeliverMiddleware(tracer, "billing") (mq.HandleFunc(func(ctx context.Context, d amqp.Delivery) {
+			mqModel := &mq.MQModel{}
+			err := json.Unmarshal(d.Body, mqModel)
+			if err != nil {
+				logger.Log("mehtod", "json.Unmarshal", "err", err)
+				return
+			}
 			r := &pb.TripMsg{}
-			err := proto.Unmarshal(d.Body, r)
+			err = proto.Unmarshal(mqModel.Data, r)
 			if err != nil {
 				logger.Log("consume", ConsumeTripQueueName, "err", err)
 				return
 			}
+			d.Ack(false)
+			logger.Log("method", "consume", "name", ConsumeTripQueueName, "err", "null")
+
 			err = redis.Billing{}.LPUSH(&pb.BillMsg{
 				BillNum:              0,
 				Price:                rand.Float32(),		//价格随机计算
@@ -125,20 +127,20 @@ func RecvAndGenBill(ctx context.Context, logger log.Logger) {
 				logger.Log("method", "LPUSH", "name", "bill_list", "err", err)
 				return
 			}
-			logger.Log("method", "consume", "name", ConsumeTripQueueName, "err", "null")
+		}))
+		BillingMessageServer.Consume(ctx, ConsumeTripQueueName, deliverServer)
+	}(tracer)
+
+	go func(tracer *zipkin.Tracer) {
+		deliverServer := mq.InitDeliverMiddleware(tracer, "billing")(mq.HandleFunc(func(ctx context.Context, d amqp.Delivery) {
 			d.Ack(false)
-
-			//err = TripRespMessageServer.SendResp(ctx, d.ReplyTo, d.CorrelationId, []byte("send trip success"))
-			//if err != nil {
-			//	logger.Log("method", "SendResp", "err", err)
-			//	return
-			//}
-		})
-	}(ctx)
-
-	go func(context.Context) {
-		BillingMessageServer.Consume(ctx, ConsumePayQueueName, func(d amqp.Delivery) {
-			billNum := int64(binary.BigEndian.Uint64(d.Body))
+			mqModel := &mq.MQModel{}
+			err := json.Unmarshal(d.Body, mqModel)
+			if err != nil {
+				logger.Log("mehtod", "json.Unmarshal", "err", err)
+				return
+			}
+			billNum := int64(binary.BigEndian.Uint64(mqModel.Data))
 			price, err := models.SetPayedAndGetPrice(billNum)
 			if err != nil {
 				logger.Log("method", "SetPayedAndGetPrice", "err", err)
@@ -152,11 +154,23 @@ func RecvAndGenBill(ctx context.Context, logger log.Logger) {
 				logger.Log("method", "SendResp", "err", err)
 				return
 			}
-		})
-	}(ctx)
+		}))
+		BillingMessageServer.Consume(ctx, ConsumePayQueueName, deliverServer)
+	}(tracer)
 
 	for {
-		_, err := defaultBasicBillingService.GenBill(ctx, &pb.GenBillRequest{})
+		billData, err := redis.Billing{}.BRPOPData()
+		if err != nil {
+			logger.Log("method", "BRPOPData", "name", "bill_list", "err", err)
+		}
+		bill := &pb.BillMsg{}
+		err = proto.Unmarshal(billData, bill)
+		if err != nil {
+			logger.Log("method", "proto.Unmarshal", "err", err)
+		}
+		_, err = defaultBasicBillingService.GenBill(ctx, &pb.GenBillRequest{
+			BillMsg:  bill,
+		})
 		if err != nil {
 			logger.Log("method", "GenBill", "err", err)
 		}

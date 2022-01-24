@@ -86,35 +86,5 @@ func main() {
 			return
 		}
 		fmt.Println(r2)
-
-	}
-	{	//mysql
-		//r1, err := models.GetAccount(1, "qwer")
-		//fmt.Println(r1, err)
-		////models.AddAccount(&models.Account{
-		////	AccountNum:  2,
-		////	PayPassword: "asdf",
-		////	Asset:       354.6,
-		////})
-		////models.DelAccount(2)
-		//models.UpdateAccount(1, &models.Account{Asset: 321})
-		//
-		//r2, _ := models.GetBill(1)
-		//fmt.Println(r2)
-		//models.AddBill(&models.Bill{
-		//	BillNum:       2,
-		//	Price:         65.7,
-		//	StartTime:     123,
-		//	EndTime:       556,
-		//	Origin:        "三元里",
-		//	Destination:   "成华大道",
-		//	PassengerName: "张三",
-		//	DriverName:    "李四",
-		//	Payed:         false,
-		//})
-		//models.DelBill(2)
-		//models.UpdateBill(1, &models.Bill{
-		//	Origin: "二仙桥",
-		//})
 	}
 }

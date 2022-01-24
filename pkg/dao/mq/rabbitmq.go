@@ -17,17 +17,9 @@ const (
 
 type MessageServer interface {
 	Publish(ctx context.Context, name string, data []byte) (err error)
-	Consume(ctx context.Context, name string, handlerFunc func(d amqp.Delivery)) error
+	Consume(ctx context.Context, name string, handler DeliverHandler) error
 	ReceiveResp(ctx context.Context) (d amqp.Delivery, err error)
 	SendResp(ctx context.Context, routingKey, corrId string, data []byte) (err error)
-}
-
-type MQ struct {
-	Conn             *amqp.Connection
-	Ch               *amqp.Channel
-	Q                amqp.Queue
-	Msgs             <-chan amqp.Delivery
-	CorrId           string
 }
 
 func NewMessageServer(name string) (MessageServer, error) {
@@ -120,7 +112,7 @@ func (mq *MQ) Publish(ctx context.Context, name string, data []byte) (err error)
 	return nil
 }
 
-func (mq *MQ) Consume(ctx context.Context, name string, handlerFunc func(d amqp.Delivery)) error {
+func (mq *MQ) Consume(ctx context.Context, name string, handler DeliverHandler) error {
 	q, err := mq.Ch.QueueDeclare(
 		name,
 		false,
@@ -146,7 +138,7 @@ func (mq *MQ) Consume(ctx context.Context, name string, handlerFunc func(d amqp.
 	}
 
 	for d := range msgs{
-		handlerFunc(d)
+		handler.Deliver(ctx, d)
 	}
 	return nil
 }

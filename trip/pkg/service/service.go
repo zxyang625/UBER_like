@@ -2,11 +2,15 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/go-kit/kit/log"
 	"github.com/golang/protobuf/proto"
+	"github.com/openzipkin/zipkin-go"
+	"github.com/openzipkin/zipkin-go/model"
 	"github.com/streadway/amqp"
 	"math/rand"
 	"pkg/dao/models"
+	"pkg/dao/mq"
 	"pkg/dao/redis"
 	Err "pkg/error"
 	"pkg/pb"
@@ -26,6 +30,25 @@ func (b *basicTripService) GenTrip(ctx context.Context, req *pb.GenTripRequest) 
 	if err != nil {
 		return nil, err
 	}
+
+	span := zipkin.SpanOrNoopFromContext(ctx)
+	//traceId := idgenerator.NewRandom64().TraceID()
+	mqModel := mq.MQModel{
+		Data: tripData,
+		SpanModel: model.SpanModel{
+			SpanContext: model.SpanContext{
+				TraceID:  span.Context().TraceID,
+				ID:       span.Context().ID,
+				ParentID: span.Context().ParentID,
+			},
+		},
+	}
+	ctx = zipkin.NewContext(ctx, span)
+	mqData, err := json.Marshal(mqModel)
+	if err != nil {
+		return nil, err
+	}
+
 	trip := &pb.TripMsg{}
 	err = proto.Unmarshal(tripData, trip)
 	if err != nil {
@@ -48,7 +71,7 @@ func (b *basicTripService) GenTrip(ctx context.Context, req *pb.GenTripRequest) 
 	if err != nil {
 		return nil, err
 	}
-	err = TripMessageServer.Publish(ctx, PublishQueueName, tripData)
+	err = TripMessageServer.Publish(ctx, PublishQueueName, mqData)
 	if err != nil {
 		return nil, Err.New(Err.ProtoUnmarshalFail, err.Error())
 	}
@@ -69,11 +92,17 @@ func New(middleware []Middleware) TripService {
 	return svc
 }
 
-func RecvReqAndPushTrip(ctx context.Context, logger log.Logger) {
-	go func(context.Context) {
-		TripMessageServer.Consume(ctx, ConsumePassengerName, func(d amqp.Delivery) {
+func RecvReqAndPushTrip(ctx context.Context, logger log.Logger, tracer *zipkin.Tracer) {
+	go func(*zipkin.Tracer) {
+		deliverServer := mq.InitDeliverMiddleware(tracer, "trip")(mq.HandleFunc(func(ctx context.Context, d amqp.Delivery) {
+			mqModel := &mq.MQModel{}
+			err := json.Unmarshal(d.Body, mqModel)
+			if err != nil {
+				logger.Log("method", "json.Unmarshal", "err", err)
+				return
+			}
 			r1 := &pb.PublishOrderRequest{}
-			err := proto.Unmarshal(d.Body, r1)
+			err = proto.Unmarshal(mqModel.Data, r1)
 			if err != nil {
 				logger.Log("consume", ConsumePassengerName, "err", err)
 				return
@@ -86,29 +115,34 @@ func RecvReqAndPushTrip(ctx context.Context, logger log.Logger) {
 			d.Ack(false)
 			logger.Log("method", "consume", "name", ConsumePassengerName, "err", "null")
 
-			//go func() {
-				resp1 := &pb.PublishOrderReply{
-					Status: true,
-					Msg: "publish order success! waiting in line...",
-				}
-				data, err := proto.Marshal(resp1)
-				if err != nil {
-					logger.Log("method", "proto marshal", "target", "PublishOrderReply", "err", err)
-					return
-				}
-				err = PassengerRespMessageServer.SendResp(ctx, d.ReplyTo, d.CorrelationId, data)
-				if err != nil {
-					logger.Log("method", "SendResp", "err", err)
-					return
-				}
-			//}()
-		})
-	}(ctx)
+			resp1 := &pb.PublishOrderReply{
+				Status: true,
+				Msg: "publish order success! waiting in line...",
+			}
+			data, err := proto.Marshal(resp1)
+			if err != nil {
+				logger.Log("method", "proto marshal", "target", "PublishOrderReply", "err", err)
+				return
+			}
+			err = PassengerRespMessageServer.SendResp(ctx, d.ReplyTo, d.CorrelationId, data)
+			if err != nil {
+				logger.Log("method", "SendResp", "err", err)
+				return
+			}
+		}))
+		TripMessageServer.Consume(ctx, ConsumePassengerName, deliverServer)
+	}(tracer)
 
 	go func(context.Context) {
-		TripMessageServer.Consume(ctx, ConsumeDriverName, func(d amqp.Delivery) {
+		deliverServer := mq.InitDeliverMiddleware(tracer, "trip")(mq.HandleFunc(func(ctx context.Context, d amqp.Delivery) {
+			mqModel := &mq.MQModel{}
+			err := json.Unmarshal(d.Body, mqModel)
+			if err != nil {
+				logger.Log("method", "json.Unmarshal", "err", err)
+				return
+			}
 			r2 := &pb.TakeOrderRequest{}
-			err := proto.Unmarshal(d.Body, r2)
+			err = proto.Unmarshal(mqModel.Data, r2)
 			if err != nil {
 				logger.Log("consume", ConsumeDriverName, "err", err)
 				return
@@ -120,23 +154,23 @@ func RecvReqAndPushTrip(ctx context.Context, logger log.Logger) {
 			}
 			d.Ack(false)
 			logger.Log("method", "consume", "name", ConsumeDriverName, "err", "null")
-			//go func() {
-				resp2 := &pb.TakeOrderReply{
-					Status: true,
-					Msg: "take order success! waiting in line...",
-				}
-				data, err := proto.Marshal(resp2)
-				if err != nil {
-					logger.Log("method", "proto marshal", "target", "TakeOrderReply", "err", err)
-					return
-				}
-				err = DriverRespMessageServer.SendResp(ctx, d.ReplyTo, d.CorrelationId, data)
-				if err != nil {
-					logger.Log("method", "SendResp", "err", err)
-					return
-				}
-			//}()
-		})
+
+			resp2 := &pb.TakeOrderReply{
+				Status: true,
+				Msg: "take order success! waiting in line...",
+			}
+			data, err := proto.Marshal(resp2)
+			if err != nil {
+				logger.Log("method", "proto marshal", "target", "TakeOrderReply", "err", err)
+				return
+			}
+			err = DriverRespMessageServer.SendResp(ctx, d.ReplyTo, d.CorrelationId, data)
+			if err != nil {
+				logger.Log("method", "SendResp", "err", err)
+				return
+			}
+		}))
+		TripMessageServer.Consume(ctx, ConsumeDriverName, deliverServer)
 	}(ctx)
 
 	for {
@@ -167,9 +201,11 @@ func RecvReqAndPushTrip(ctx context.Context, logger log.Logger) {
 			logger.Log("method", "LPUSH", "trip_num", trip.TripNum, "err", err)
 		}
 
-		_, err = defaultBasicTripService.GenTrip(ctx, &pb.GenTripRequest{})
+		span, ctx1 := tracer.StartSpanFromContext(ctx, "trip/gen_trip")
+		_, err = defaultBasicTripService.GenTrip(ctx1, &pb.GenTripRequest{})
 		if err != nil {
 			logger.Log("method", "GenTrip", "err", err)
 		}
+		span.Finish()
 	}
 }

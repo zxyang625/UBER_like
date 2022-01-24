@@ -79,17 +79,17 @@ func Run() {
 		os.Exit(-1)
 	}
 
-	err = service.InitMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "billing_mq"))
+	err = service.InitMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "billing_msg/"))
 	if err != nil {
 		logger.Log("InitMessageServer", "fail", "err", err)
 		os.Exit(-1)
 	}
-	err = service.InitPaySendRespMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "billing_mq"))
+	err = service.InitPaySendRespMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "billing_msg/"))
 	if err != nil {
 		logger.Log("InitPaySendRespMessageServer", "fail", "err", err)
 		os.Exit(-1)
 	}
-	go service.RecvAndGenBill(context.Background(), logger)	//这里构建监听服务
+	go service.RecvAndGenBill(context.Background(), logger, tracer.NativeTracer) //这里构建监听服务
 	////////////////////////////////////////////
 	svc := service.New(getServiceMiddleware(logger))
 	eps := endpoint.New(svc, getEndpointMiddleware(logger))
@@ -128,19 +128,19 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGenBill, "GenBill histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGenBill, "GenBill count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGenBill+"_zipkin"),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGenBill+"/service"),
 		},
 		"GetBillList": {
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGetBillList, "GetBillList histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGetBillList, "GetBillList count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetBillList+"_zipkin"),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetBillList+"/service"),
 		},
 		"GetBill" : {
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGetBill, "GetBill histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGetBill, "GetBill count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetBill+"_zipkin"),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetBill+"/service"),
 		},
 	}
 

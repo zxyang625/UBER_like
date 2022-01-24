@@ -18,18 +18,16 @@ func decodeGenBillRequest(_ context.Context, r interface{}) (interface{}, error)
 	req := r.(*pb.GenBillRequest)
 	return endpoint.GenBillRequest{
 		Req: &pb.GenBillRequest{
-			TripMsg: &pb.TripMsg{
-				TripNum:       req.TripMsg.TripNum,
-				PassengerId:   req.TripMsg.PassengerId,
-				DriverId:      req.TripMsg.DriverId,
-				PassengerName: req.TripMsg.PassengerName,
-				DriverName:    req.TripMsg.DriverName,
-				StartTime:     req.TripMsg.StartTime,
-				EndTime:       req.TripMsg.EndTime,
-				Origin:        req.TripMsg.Origin,
-				Destination:   req.TripMsg.Destination,
-				Car:           req.TripMsg.Car,
-				Path:          req.TripMsg.Path,
+			BillMsg: &pb.BillMsg{
+				BillNum:       req.BillMsg.BillNum,
+				PassengerId:   req.BillMsg.PassengerId,
+				DriverId:      req.BillMsg.DriverId,
+				PassengerName: req.BillMsg.PassengerName,
+				DriverName:    req.BillMsg.DriverName,
+				StartTime:     req.BillMsg.StartTime,
+				EndTime:       req.BillMsg.EndTime,
+				Origin:        req.BillMsg.Origin,
+				Destination:   req.BillMsg.Destination,
 			},
 		},
 	}, nil

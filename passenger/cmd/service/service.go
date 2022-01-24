@@ -79,7 +79,7 @@ func Run() {
 		os.Exit(-1)
 	}
 
-	err = service.InitMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "passenger_mq"))
+	err = service.InitMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "passenger_msg/"))
 	if err != nil {
 		logger.Log("InitMessageServer", "fail", "err", err)
 		os.Exit(-1)
@@ -121,14 +121,14 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGetPassengerInfo, "GetPassengerInfo histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGetPassengerInfo, "GetPassengerInfo count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetPassengerInfo + "_zipkin"),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetPassengerInfo + "/service"),
 		},
 		"PublishOrder": {
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodPublishOrder, "PublishOrder histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodPublishOrder, "PublishOrder count")),
 			//TODO
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodPublishOrder + "_zipkin"),
+			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodPublishOrder + "/service"),
 		},
 	}
 

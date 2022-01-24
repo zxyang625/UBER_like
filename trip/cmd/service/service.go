@@ -78,17 +78,17 @@ func Run() {
 		os.Exit(-1)
 	}
 
-	err = service.InitMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "trip_mq"))
+	err = service.InitMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "trip_msg/"))
 	if err != nil {
 		logger.Log("Init MessageServer", "fail", "err", err)
 		os.Exit(-1)
 	}
-	err = service.InitTripSendRespMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "trip_mq_send_resp"))
+	err = service.InitTripSendRespMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "trip_msg/"))
 	if err != nil {
 		logger.Log("Init PassengerRespMessageServer", "fail", "err", err)
 		os.Exit(-1)
 	}
-	go service.RecvReqAndPushTrip(context.Background(), logger)	//这里构建监听服务
+	go service.RecvReqAndPushTrip(context.Background(), logger, tracer.NativeTracer)	//这里构建监听服务
 	//////////////////////////////////////////////////////////
 	svc := service.New(getServiceMiddleware(logger))
 	eps := endpoint.New(svc, getEndpointMiddleware(logger))
@@ -127,7 +127,7 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 		endpoint.LoggingMiddleware(logger),
 		endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGenTrip, "GenTrip histogram")),
 		endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGenTrip, "GenTrip count")),
-		zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGenTrip + "_zipkin"),
+		zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGenTrip + "/service"),
 		},
 	}
 
