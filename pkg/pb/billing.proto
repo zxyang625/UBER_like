@@ -1,10 +1,24 @@
 syntax = "proto3";
+import "google/api/annotations.proto";
 package pb;
 
 service Billing {
-  rpc GenBill(GenBillRequest) returns (GenBillReply);
-  rpc GetBillList(GetBillListRequest) returns (GetBillListReply);
-  rpc GetBill(GetBillRequest) returns (GetBillReply);
+  rpc GenBill(GenBillRequest) returns (GenBillReply) {
+    option (google.api.http) = {
+      post: "/billing/gen-bill"
+      body: "*"
+    };
+  };
+  rpc GetBillList(GetBillListRequest) returns (GetBillListReply) {
+    option (google.api.http) = {
+      get: "/billing/get-bill-list"
+    };
+  };
+  rpc GetBill(GetBillRequest) returns (GetBillReply) {
+    option (google.api.http) = {
+      get: "/billing/get-bill"
+    };
+  };
 }
 
 message BillMsg {

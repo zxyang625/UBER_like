@@ -1,9 +1,14 @@
 syntax = "proto3";
-
+import "google/api/annotations.proto";
 package pb;
 
 service Payment {
- rpc Pay             (PayRequest            ) returns (PayReply            );
+ rpc Pay             (PayRequest            ) returns (PayReply            ) {
+  option (google.api.http) = {
+   post: "/payment/pay"
+   body: "*"
+  };
+ };
 }
 
 message PayRequest {

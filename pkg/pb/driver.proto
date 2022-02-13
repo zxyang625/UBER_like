@@ -1,13 +1,21 @@
 syntax = "proto3";
+import "google/api/annotations.proto";
 
 package pb;
 
-
-
 //The Driver service definition.
 service Driver {
- rpc GetDriverInfo (GetDriverInfoRequest) returns (GetDriverInfoReply);
- rpc TakeOrder     (TakeOrderRequest    ) returns (TakeOrderReply    );
+ rpc GetDriverInfo (GetDriverInfoRequest) returns (GetDriverInfoReply) {
+  option (google.api.http) = {
+   get: "/driver/get-driver-info"
+  };
+ };
+ rpc TakeOrder     (TakeOrderRequest    ) returns (TakeOrderReply    ) {
+  option (google.api.http) = {
+   post: "/driver/take-order"
+   body: "*"
+  };
+ };
 }
 
 message GetDriverInfoRequest {

@@ -46,6 +46,8 @@ const (
 	ProtoUnmarshalFail
 
 	RPCRequestTimeout
+
+	ProxyURLInvalid
 )
 
 func Errorf(c code, format string, a ...interface{}) error {

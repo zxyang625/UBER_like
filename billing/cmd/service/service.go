@@ -9,6 +9,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"log"
 	"net"
 	http2 "net/http"
@@ -19,8 +20,6 @@ import (
 	"pkg/pb"
 	"pkg/promtheus"
 	"pkg/tracing"
-	"strconv"
-	"strings"
 	"syscall"
 
 	"github.com/go-kit/kit/tracing/zipkin"
@@ -41,11 +40,12 @@ var logger kitlog.Logger
 var fs = flag.NewFlagSet("billing", flag.ExitOnError)
 var debugAddr = fs.String("debug-addr", ":8080", "Debug and metrics listen address")
 var httpAddr = fs.String("http-addr", ":8081", "HTTP listen address")
-var grpcAddr = fs.String("grpc-addr", ":8082", "gRPC listen address")
+var grpcAddr = fs.String("grpc-addr", "127.0.0.1:8082", "gRPC listen address")
 var zipkinURL = fs.String("zipkin-url", tracing.DefaultZipkinURL, "Enable Zipkin tracing via a collector URL e.g. http://localhost:9411/api/v1/spans")
 var serviceName = fs.String("service-name", "Billing", "default service name")
 var consulAddr = fs.String("consul-addr", "127.0.0.1", "consul listen addr")
 var consulPort = fs.Int("consul-port", 8500, "consul list port")
+var grpcGatewayAddr = fs.String("grpc-gateway-addr", ":8083", "gRPC gateway listen address")
 
 func Run() {
 	fs.Parse(os.Args[1:])
@@ -70,9 +70,7 @@ func Run() {
 	if err != nil {
 		logger.Log("NewDiscoverClient failed", err)
 	}
-	ss := strings.Split(*grpcAddr, ":")
-	num, _ := strconv.Atoi(ss[1])
-	instanceID, ok := discoverClient.Register(*serviceName, "", "127.0.0.1", num, nil, logger)
+	instanceID, ok := discoverClient.Register(*serviceName, "", "127.0.0.1", 0, nil, logger)
 	defer discoverClient.DeRegister(instanceID, logger)
 	if !ok {
 		log.Printf("service %s register failed", *serviceName)
@@ -96,6 +94,7 @@ func Run() {
 	g := createService(eps)
 	initMetricsEndpoint(g)
 	initCancelInterrupt(g)
+	initGRPCGateway(g)
 	logger.Log("exit", g.Run())
 
 }
@@ -193,4 +192,28 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 		grpcListener.Close()
 	})
 
+}
+
+func initGRPCGateway(g *group.Group) {
+	mux := runtime.NewServeMux()
+	opts := []grpc1.DialOption{grpc1.WithInsecure()}
+
+	// HTTP转grpc
+	err := pb.RegisterBillingHandlerFromEndpoint(context.Background(), mux, *grpcAddr, opts)
+	if err != nil {
+		logger.Log("transport", "register driver handler", "err", err)
+	}
+	listener, err := net.Listen("tcp", *grpcGatewayAddr)
+	if err != nil {
+		logger.Log("transport", "Gateway/HTTP", "during", "listening", "err", err)
+		return
+	}
+	g.Add(func() error {
+		logger.Log("transport", "GRPC-Gateway", "addr", *grpcGatewayAddr)
+		return http2.Serve(listener, mux)
+	}, func(err error) {
+		logger.Log("err", err)
+		listener.Close()
+		return
+	})
 }

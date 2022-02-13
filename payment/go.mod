@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/go-kit/kit v0.12.0
+	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/oklog/oklog v0.3.2
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0

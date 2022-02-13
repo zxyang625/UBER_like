@@ -1,10 +1,14 @@
 package main
 
 import (
-	"pkg/dao/redis"
-	"pkg/pb"
-	"strconv"
-	"time"
+	"flag"
+	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"pkg/config"
+	"pkg/gateway"
+	"syscall"
 )
 
 func main() {
@@ -72,13 +76,39 @@ func main() {
 	//	}
 	//}()
 	//
-	for i := 0; i < 100; i++ {
-		redis.Driver{}.LPush(&pb.TakeOrderRequest{
-			DriverId:             int64(i),
-			DriverName:           "DriverName" + strconv.Itoa(i),
-			Location:             "Location" + strconv.Itoa(i),
-			Car:                  "Car" + strconv.Itoa(i),
-		})
+	//for i := 0; i < 100; i++ {
+	//	redis.Driver{}.LPush(&pb.TakeOrderRequest{
+	//		DriverId:             int64(i),
+	//		DriverName:           "DriverName" + strconv.Itoa(i),
+	//		Location:             "Location" + strconv.Itoa(i),
+	//		Car:                  "Car" + strconv.Itoa(i),
+	//	})
+	//}
+	//time.Sleep(10 * time.Second)
+
+	var (
+		consulHost = flag.String("consul.host", "127.0.0.1", "consul server ip address")
+		consulPort = flag.Int("consul.port", 8500, "consul server port")
+	)
+	logger := config.GetKitLogger("ReverseProxy")
+
+	proxy, err := gateway.NewReverseProxy(*consulHost, *consulPort, logger)
+	if err != nil {
+		logger.Log("err", err)
+		os.Exit(-1)
 	}
-	time.Sleep(10 * time.Second)
+
+	errc := make(chan error)
+	go func() {
+		c := make(chan os.Signal)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+		errc <- fmt.Errorf("%s", <-c)
+	}()
+
+	go func() {
+		logger.Log("ReverseProxy", "Listening", "addr", "10000")
+		errc <- http.ListenAndServe(":10000", proxy)
+	}()
+
+	logger.Log("exit", <-errc)
 }

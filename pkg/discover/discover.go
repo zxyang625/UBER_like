@@ -62,18 +62,19 @@ func (d *DiscoverClientImpl) Register(serviceName, healthCheckUrl, instanceHost 
 	if instanceHost == "" {
 		serviceRegistration.Address = "127.0.0.1"
 	}
+	if instancePort == 0 {
+		if d.UseGRPC {
+			instancePort = 8082
+			serviceRegistration.Port = 8083
+		} else {
+			instancePort = 8081
+		}
+	}
 	if healthCheckUrl == "" {
 		if d.UseGRPC {
 			serviceRegistration.Check.GRPC = instanceHost + ":" + strconv.Itoa(instancePort) + "/" + serviceName
 		} else {
 			serviceRegistration.Check.HTTP = "http://" + instanceHost + ":" + strconv.Itoa(instancePort) + "/health-check"
-		}
-	}
-	if instancePort == 0 {
-		if d.UseGRPC {
-			serviceRegistration.Port = 8082
-		} else {
-			serviceRegistration.Port = 8081
 		}
 	}
 	err := d.client.Register(serviceRegistration)

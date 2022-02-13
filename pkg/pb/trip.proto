@@ -1,9 +1,15 @@
 syntax = "proto3";
+import "google/api/annotations.proto";
 package pb;
 
 //The Trip service definition.
 service Trip {
- rpc GenTrip(GenTripRequest) returns(GenTripReply);
+ rpc GenTrip(GenTripRequest) returns(GenTripReply) {
+  option (google.api.http) = {
+   post: "/trip/gen-trip"
+   body: "*"
+  };
+ }
 }
 
 message GenTripRequest {
