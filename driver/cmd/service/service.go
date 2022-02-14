@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"driver/pkg/config"
 	endpoint "driver/pkg/endpoint"
 	grpc "driver/pkg/grpc"
 	http1 "driver/pkg/http"
@@ -11,14 +10,18 @@ import (
 	"fmt"
 	"github.com/go-kit/kit/tracing/zipkin"
 	grpc2 "github.com/go-kit/kit/transport/grpc"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"google.golang.org/grpc/metadata"
 	"log"
 	"net"
 	http2 "net/http"
 	"os"
 	"os/signal"
+	"pkg/config"
 	"pkg/dao/mq"
 	"pkg/discover"
+	"pkg/interceptor"
 	"pkg/pb"
 	"pkg/promtheus"
 	"pkg/tracing"
@@ -42,7 +45,7 @@ var debugAddr = fs.String("debug-addr", ":8080", "Debug and metrics listen addre
 var httpAddr = fs.String("http-addr", ":8081", "HTTP listen address")
 var grpcAddr = fs.String("grpc-addr", "127.0.0.1:8082", "gRPC listen address")
 var zipkinURL = fs.String("zipkin-url", tracing.DefaultZipkinURL, "Enable Zipkin tracing via a collector URL e.g. http://localhost:9411/api/v1/spans")
-var serviceName = fs.String("service-name", "Driver", "default service name")
+var serviceName = fs.String("service-name", "driver", "default service name")
 var consulAddr = fs.String("consul-addr", "127.0.0.1", "consul listen addr")
 var consulPort = fs.Int("consul-port", 8500, "consul list port")
 var grpcGatewayAddr = fs.String("grpc-gateway-addr", ":8083", "gRPC gateway listen address")
@@ -50,7 +53,7 @@ var grpcGatewayAddr = fs.String("grpc-gateway-addr", ":8083", "gRPC gateway list
 func Run() {
 	fs.Parse(os.Args[1:])
 
-	logger = config.GetKitLogger()
+	logger = config.GetKitLogger("driver")
 
 	if *zipkinURL != "" {
 		logger.Log("tracer", "Zipkin", "URL", *zipkinURL)
@@ -119,14 +122,14 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 	mw = map[string][]endpoint1.Middleware{
 		"GetDriverInfo": {
 			endpoint.LoggingMiddleware(logger),
-			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGetDriverInfo, "GetDriverInfo histogram")),
-			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGetDriverInfo, "GetDriverInfo count")),
+			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemDriver, config.MethodGetDriverInfo, "GetDriverInfo histogram")),
+			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemDriver, config.MethodGetDriverInfo, "GetDriverInfo count")),
 			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetDriverInfo+"/service"),
 		},
 		"TakeOrder": {
 			endpoint.LoggingMiddleware(logger),
-			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodTakeOrder, "TakeOrder histogram")),
-			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodTakeOrder, "TakeOrder count")),
+			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemDriver, config.MethodTakeOrder, "TakeOrder histogram")),
+			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemDriver, config.MethodTakeOrder, "TakeOrder count")),
 			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodTakeOrder+"/service"),
 		},
 	}
@@ -172,7 +175,7 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 	}
 	g.Add(func() error {
 		logger.Log("transport", "gRPC", "addr", *grpcAddr)
-		baseServer := grpc1.NewServer(grpc1.UnaryInterceptor(grpc2.Interceptor))
+		baseServer := grpc1.NewServer(grpc1.UnaryInterceptor(grpc_middleware.ChainUnaryServer(grpc2.Interceptor, interceptor.Interceptor)))
 		pb.RegisterDriverServer(baseServer, grpcServer)
 		grpc_health_v1.RegisterHealthServer(baseServer, &discover.HealthImpl{})
 		return baseServer.Serve(grpcListener)
@@ -182,7 +185,11 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 
 }
 func initGRPCGateway(g *group.Group) {
-	mux := runtime.NewServeMux()
+	mux := runtime.NewServeMux(runtime.WithMetadata(func(ctx context.Context, request *http2.Request) metadata.MD {
+		md := metadata.MD{}
+		md.Set("Priority", request.Header.Get("Priority"))
+		return md
+	}))
 	opts := []grpc1.DialOption{grpc1.WithInsecure()}
 
 	// HTTP转grpc

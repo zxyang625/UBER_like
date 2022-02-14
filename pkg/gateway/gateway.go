@@ -8,6 +8,7 @@ import (
 	"net/http/httputil"
 	"pkg/discover"
 	"pkg/loadbalance"
+	"strconv"
 	"strings"
 )
 
@@ -42,6 +43,14 @@ func NewReverseProxy(consulHost string, consulPort int, logger kitlog.Logger) (*
 		req.URL.Scheme = "http"
 		req.URL.Host = fmt.Sprintf("%s:%d", addr, port)
 		req.URL.Path = "/" + destPath
+
+		priority := req.Header.Get("Priority")
+		if priority == "" {
+			req.Header.Set("Priority", "0")
+		} else {
+			num, _ := strconv.Atoi(priority)
+			req.Header.Set("Priority", fmt.Sprintf("%d", num + 1))
+		}
 	}
 	return &httputil.ReverseProxy{
 		Director: director,

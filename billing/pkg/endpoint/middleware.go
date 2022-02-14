@@ -1,12 +1,12 @@
 package endpoint
 
 import (
-	"billing/pkg/config"
 	"context"
 	"fmt"
 	endpoint "github.com/go-kit/kit/endpoint"
 	log "github.com/go-kit/kit/log"
 	metrics "github.com/go-kit/kit/metrics"
+	"pkg/config"
 	"time"
 )
 
@@ -18,7 +18,7 @@ func InstrumentingMiddleware(duration metrics.Histogram) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			defer func(begin time.Time) {
-				duration.With(config.System+"_histogram", fmt.Sprint(err == nil)).Observe(time.Since(begin).Seconds())
+				duration.With(config.SystemBilling + "_histogram", fmt.Sprint(err == nil)).Observe(time.Since(begin).Seconds())
 			}(time.Now())
 			return next(ctx, request)
 		}
@@ -42,7 +42,7 @@ func CountingMiddleware(count metrics.Counter) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			defer func(begin time.Time) {
-				count.With(config.System+"_counter", fmt.Sprint(err == nil)).Add(1)
+				count.With(config.SystemBilling + "_counter", fmt.Sprint(err == nil)).Add(1)
 			}(time.Now())
 			return next(ctx, request)
 		}

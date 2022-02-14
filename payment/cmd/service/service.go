@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"github.com/go-kit/kit/tracing/zipkin"
 	grpc2 "github.com/go-kit/kit/transport/grpc"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	opentracinggo "github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/metadata"
 	log "log"
 	"net"
 	http "net/http"
@@ -21,6 +23,7 @@ import (
 	"pkg/config"
 	"pkg/dao/mq"
 	"pkg/discover"
+	"pkg/interceptor"
 	pb "pkg/pb"
 	"pkg/promtheus"
 	"pkg/tracing"
@@ -46,12 +49,11 @@ var serviceName = fs.String("service-name", "payment", "default service name")
 var consulAddr = fs.String("consul-addr", "127.0.0.1", "consul listen addr")
 var consulPort = fs.Int("consul-port", 8500, "consul list port")
 var grpcGatewayAddr = fs.String("grpc-gateway-addr", ":8083", "gRPC gateway listen address")
-var system = "Payment"
 
 func Run() {
 	fs.Parse(os.Args[1:])
 
-	logger = config.GetKitLogger(system)
+	logger = config.GetKitLogger(config.SystemPayment)
 
 	if *zipkinURL != "" {
 		logger.Log("tracer", "Zipkin", "URL", *zipkinURL)
@@ -117,8 +119,8 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]kitendpoint.Mi
 	mw = map[string][]kitendpoint.Middleware{
 		"Pay": {
 			endpoint.LoggingMiddleware(logger),
-			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(system, config.MethodPay, "Pay histogram")),
-			endpoint.CountingMiddleware(promtheus.NewCounter(system, config.MethodPay, "Pay count")),
+			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemPayment, config.MethodPay, "Pay histogram")),
+			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemPayment, config.MethodPay, "Pay count")),
 			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodPay + "/service"),
 		},
 	}
@@ -164,7 +166,7 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 	}
 	g.Add(func() error {
 		logger.Log("transport", "gRPC", "addr", *grpcAddr)
-		baseServer := grpc1.NewServer(grpc1.UnaryInterceptor(grpc2.Interceptor))
+		baseServer := grpc1.NewServer(grpc1.UnaryInterceptor(grpc_middleware.ChainUnaryServer(grpc2.Interceptor, interceptor.Interceptor)))
 		pb.RegisterPaymentServer(baseServer, grpcServer)
 		grpc_health_v1.RegisterHealthServer(baseServer, &discover.HealthImpl{})
 		return baseServer.Serve(grpcListener)
@@ -175,7 +177,11 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 }
 
 func initGRPCGateway(g *group.Group) {
-	mux := runtime.NewServeMux()
+	mux := runtime.NewServeMux(runtime.WithMetadata(func(ctx context.Context, request *http.Request) metadata.MD {
+		md := metadata.MD{}
+		md.Set("Priority", request.Header.Get("Priority"))
+		return md
+	}))
 	opts := []grpc1.DialOption{grpc1.WithInsecure()}
 
 	// HTTP转grpc

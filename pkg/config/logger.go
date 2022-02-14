@@ -21,6 +21,14 @@ const (
 	MethodGetBill           = "GetBill"
 )
 
+var (
+	SystemPayment = "payment"
+	SystemPassenger = "passenger"
+	SystemDriver = "driver"
+	SystemTrip = "trip"
+	SystemBilling = "billing"
+)
+
 var KitLogger kitlog.Logger
 
 func init() {

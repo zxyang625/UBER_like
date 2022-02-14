@@ -1,7 +1,6 @@
 package service
 
 import (
-	"billing/pkg/config"
 	endpoint "billing/pkg/endpoint"
 	grpc "billing/pkg/grpc"
 	http1 "billing/pkg/http"
@@ -9,14 +8,18 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"google.golang.org/grpc/metadata"
 	"log"
 	"net"
 	http2 "net/http"
 	"os"
 	"os/signal"
+	"pkg/config"
 	"pkg/dao/mq"
 	"pkg/discover"
+	"pkg/interceptor"
 	"pkg/pb"
 	"pkg/promtheus"
 	"pkg/tracing"
@@ -42,7 +45,7 @@ var debugAddr = fs.String("debug-addr", ":8080", "Debug and metrics listen addre
 var httpAddr = fs.String("http-addr", ":8081", "HTTP listen address")
 var grpcAddr = fs.String("grpc-addr", "127.0.0.1:8082", "gRPC listen address")
 var zipkinURL = fs.String("zipkin-url", tracing.DefaultZipkinURL, "Enable Zipkin tracing via a collector URL e.g. http://localhost:9411/api/v1/spans")
-var serviceName = fs.String("service-name", "Billing", "default service name")
+var serviceName = fs.String("service-name", "billing", "default service name")
 var consulAddr = fs.String("consul-addr", "127.0.0.1", "consul listen addr")
 var consulPort = fs.Int("consul-port", 8500, "consul list port")
 var grpcGatewayAddr = fs.String("grpc-gateway-addr", ":8083", "gRPC gateway listen address")
@@ -50,7 +53,7 @@ var grpcGatewayAddr = fs.String("grpc-gateway-addr", ":8083", "gRPC gateway list
 func Run() {
 	fs.Parse(os.Args[1:])
 
-	logger = config.GetKitLogger()
+	logger = config.GetKitLogger(config.SystemBilling)
 
 	if *zipkinURL != "" {
 		logger.Log("tracer", "Zipkin", "URL", *zipkinURL)
@@ -125,20 +128,20 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 	mw = map[string][]endpoint1.Middleware{
 		"GenBill": {
 			endpoint.LoggingMiddleware(logger),
-			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGenBill, "GenBill histogram")),
-			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGenBill, "GenBill count")),
+			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemBilling, config.MethodGenBill, "GenBill histogram")),
+			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemBilling, config.MethodGenBill, "GenBill count")),
 			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGenBill+"/service"),
 		},
 		"GetBillList": {
 			endpoint.LoggingMiddleware(logger),
-			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGetBillList, "GetBillList histogram")),
-			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGetBillList, "GetBillList count")),
+			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemBilling, config.MethodGetBillList, "GetBillList histogram")),
+			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemBilling, config.MethodGetBillList, "GetBillList count")),
 			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetBillList+"/service"),
 		},
 		"GetBill" : {
 			endpoint.LoggingMiddleware(logger),
-			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.System, config.MethodGetBill, "GetBill histogram")),
-			endpoint.CountingMiddleware(promtheus.NewCounter(config.System, config.MethodGetBill, "GetBill count")),
+			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemBilling, config.MethodGetBill, "GetBill histogram")),
+			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemBilling, config.MethodGetBill, "GetBill count")),
 			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetBill+"/service"),
 		},
 	}
@@ -184,7 +187,7 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 	}
 	g.Add(func() error {
 		logger.Log("transport", "gRPC", "addr", *grpcAddr)
-		baseServer := grpc1.NewServer(grpc1.UnaryInterceptor(grpc2.Interceptor))
+		baseServer := grpc1.NewServer(grpc1.UnaryInterceptor(grpc_middleware.ChainUnaryServer(grpc2.Interceptor, interceptor.Interceptor)))
 		pb.RegisterBillingServer(baseServer, grpcServer)
 		grpc_health_v1.RegisterHealthServer(baseServer, &discover.HealthImpl{})
 		return baseServer.Serve(grpcListener)
@@ -195,7 +198,11 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 }
 
 func initGRPCGateway(g *group.Group) {
-	mux := runtime.NewServeMux()
+	mux := runtime.NewServeMux(runtime.WithMetadata(func(ctx context.Context, request *http2.Request) metadata.MD {
+		md := metadata.MD{}
+		md.Set("Priority", request.Header.Get("Priority"))
+		return md
+	}))
 	opts := []grpc1.DialOption{grpc1.WithInsecure()}
 
 	// HTTP转grpc

@@ -48,6 +48,9 @@ const (
 	RPCRequestTimeout
 
 	ProxyURLInvalid
+
+	InterceptorInvalidCtx
+	InterceptorInvalidMeta
 )
 
 func Errorf(c code, format string, a ...interface{}) error {

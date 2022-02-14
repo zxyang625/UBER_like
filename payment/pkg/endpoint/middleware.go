@@ -8,7 +8,7 @@ import (
 	metrics "github.com/go-kit/kit/metrics"
 	"github.com/openzipkin/zipkin-go"
 	"github.com/openzipkin/zipkin-go/model"
-	"payment/pkg/config"
+	"pkg/config"
 	"time"
 )
 
@@ -20,7 +20,7 @@ func InstrumentingMiddleware(duration metrics.Histogram) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			defer func(begin time.Time) {
-				duration.With(config.System+"_histogram", fmt.Sprint(err == nil)).Observe(time.Since(begin).Seconds())
+				duration.With(config.SystemPayment + "_histogram", fmt.Sprint(err == nil)).Observe(time.Since(begin).Seconds())
 			}(time.Now())
 			return next(ctx, request)
 		}
@@ -31,7 +31,7 @@ func CountingMiddleware(count metrics.Counter) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			defer func(begin time.Time) {
-				count.With(config.System+"_counter", fmt.Sprint(err == nil)).Add(1)
+				count.With(config.SystemPayment + "_counter", fmt.Sprint(err == nil)).Add(1)
 			}(time.Now())
 			return next(ctx, request)
 		}
@@ -57,7 +57,7 @@ func TraceEndpoint(tracer *zipkin.Tracer, name string) endpoint.Middleware {
 			var sc model.SpanContext
 			span := zipkin.SpanOrNoopFromContext(ctx)
 			if span == nil {
-				fmt.Println("nilllllllllllllllllllllllllllllllll")
+				fmt.Println("nil")
 			} else {
 				fmt.Printf("%+v\n", span.Context())
 				go func() {
