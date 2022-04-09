@@ -127,3 +127,29 @@ func (g *grpcServer) GetBill(ctx context1.Context, req *pb.GetBillRequest) (*pb.
 	}
 	return rep.(*pb.GetBillReply), nil
 }
+
+func makeSetPayedAndGetPriceHandler(endpoints endpoint.Endpoints, options []grpc.ServerOption) grpc.Handler {
+	return grpc.NewServer(endpoints.SetPayedAndGetPriceEndpoint, decodeSetPayedAndGetPriceRequest, encodeSetPayedAndGetPriceResponse, options...)
+}
+
+func decodeSetPayedAndGetPriceRequest(_ context.Context, r interface{}) (interface{}, error) {
+	req := r.(*pb.SetPayedAndGetPriceRequest)
+	return endpoint.SetPayedAndGetPriceRequest{
+		BillNum: req.GetBillNum(),
+	}, nil
+}
+
+func encodeSetPayedAndGetPriceResponse(_ context.Context, r interface{}) (interface{}, error) {
+	resp := r.(endpoint.SetPayedAndGetPriceResponse)
+	return &pb.SetPayedAndGetPriceReply{
+		Price:                resp.F0,
+	}, nil
+}
+
+func (g *grpcServer) SetPayedAndGetPrice(ctx context1.Context, req *pb.SetPayedAndGetPriceRequest) (*pb.SetPayedAndGetPriceReply, error) {
+	_, rep, err := g.setPayedAndGetPrice.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return rep.(*pb.SetPayedAndGetPriceReply), nil
+}

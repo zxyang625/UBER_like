@@ -2,7 +2,6 @@ package interceptor
 
 import (
 	"context"
-	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	Err "pkg/error"
@@ -17,13 +16,15 @@ func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInf
 	if !ok {
 		return nil, Err.New(Err.InterceptorInvalidCtx, "no metadata in context")
 	}
-	res := md.Get("Priority")
-	if len(res) == 0 {
+	priority := md.Get("Length")
+	if len(priority) == 0 {
 		return nil, Err.New(Err.InterceptorInvalidMeta, "priority value not found")
 	}
-	num, _ := strconv.Atoi(res[0])
-	ctx1 := context.WithValue(ctx, "Priority", num + 1)
-	fmt.Println(ctx1.Value("Priority"))
-	// 继续处理请求
-	return handler(ctx1, req)
+	num, _ := strconv.Atoi(priority[0])
+	ctx = context.WithValue(ctx, "Length", num + 1)
+	if len(md.Get("Trace-ID")) > 0 {
+		ctx = context.WithValue(ctx, "Trace-ID", md.Get("Trace-ID")[0])
+	}
+	//继续处理请求
+	return handler(ctx, req)
 }

@@ -2,15 +2,15 @@ package service
 
 import (
 	"context"
-	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"github.com/openzipkin/zipkin-go"
-	"github.com/openzipkin/zipkin-go/model"
 	"github.com/streadway/amqp"
-	"math"
+	"net/http"
 	"pkg/dao/models"
 	"pkg/dao/mq"
 	Err "pkg/error"
+	"pkg/pb"
 	"time"
 )
 
@@ -24,24 +24,27 @@ type basicPaymentService struct {
 }
 
 func (b *basicPaymentService) Pay(ctx context.Context, billNum int64, accountNum int64, payPassword string) (msg string, err error) {
+	fmt.Println("ppppp", ctx.Value("Length"))
+	fmt.Println("ttttt", ctx.Value("Trace-ID"))
 	account, err := models.GetAccount(accountNum, payPassword)
 	if err != nil {
 		return "GetAccount fail", err
 	}
-	data := make([]byte, binary.MaxVarintLen64)
-	binary.BigEndian.PutUint64(data, uint64(billNum))
 	///////////////////////////////////////////
+	data, _ := json.Marshal(&pb.SetPayedAndGetPriceRequest{BillNum: billNum})
 	span := zipkin.SpanOrNoopFromContext(ctx)
-	mqModel := mq.MQModel{
-		Data: data,
-		SpanModel: model.SpanModel{
-			SpanContext: model.SpanContext{
-			TraceID:  span.Context().TraceID,
-			ID:       span.Context().ID,
-			ParentID: span.Context().ParentID,
-		}},
+	req := mq.AsyncReq{
+		Method:      http.MethodPost,
+		Application: "billing",
+		Service:     "set-payed-and-get-price",
+		//URL:         "http://localhost:10000/billing/set-payed-and-get-price",
+		TraceID:     span.Context().TraceID,
+		Priority:    ctx.Value("Length").(int),
+		Header:      nil,
+		Data:        data,
 	}
-	mqData, err := json.Marshal(mqModel)
+
+	mqData, err := json.Marshal(&req)
 	if err != nil {
 		return "pay fail", err
 	}
@@ -52,7 +55,6 @@ func (b *basicPaymentService) Pay(ctx context.Context, billNum int64, accountNum
 	}
 	c := make(chan struct{}, 1)
 	d := amqp.Delivery{}
-	var price float32
 	go func() {
 		d, err = PayMessageServer.ReceiveResp(ctx)
 		c <- struct{}{}
@@ -62,9 +64,9 @@ func (b *basicPaymentService) Pay(ctx context.Context, billNum int64, accountNum
 		if err != nil {
 			return "pay fail", err
 		}
-		bits := binary.LittleEndian.Uint32(d.Body)
-		price = math.Float32frombits(bits)
-		account.Asset -= price
+		rsp := pb.SetPayedAndGetPriceReply{}
+		_ = json.Unmarshal(d.Body, &rsp)
+		account.Asset -= rsp.Price
 		err = models.UpdateAccount(accountNum, account)
 		if err != nil {
 			return "pay fail", err

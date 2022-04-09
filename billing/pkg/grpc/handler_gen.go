@@ -9,15 +9,17 @@ import (
 
 // NewGRPCServer makes a set of endpoints available as a gRPC AddServer
 type grpcServer struct {
-	genBill     grpc.Handler
-	getBillList grpc.Handler
-	getBill     grpc.Handler
+	genBill             grpc.Handler
+	getBillList         grpc.Handler
+	getBill             grpc.Handler
+	setPayedAndGetPrice grpc.Handler
 }
 
 func NewGRPCServer(endpoints endpoint.Endpoints, options map[string][]grpc.ServerOption) pb.BillingServer {
 	return &grpcServer{
-		genBill:     makeGenBillHandler(endpoints, options["GenBill"]),
-		getBill:     makeGetBillHandler(endpoints, options["GetBill"]),
-		getBillList: makeGetBillListHandler(endpoints, options["GetBillList"]),
+		genBill:             makeGenBillHandler(endpoints, options["GenBill"]),
+		getBill:             makeGetBillHandler(endpoints, options["GetBill"]),
+		getBillList:         makeGetBillListHandler(endpoints, options["GetBillList"]),
+		setPayedAndGetPrice: makeSetPayedAndGetPriceHandler(endpoints, options["SetPayedAndGetPrice"]),
 	}
 }

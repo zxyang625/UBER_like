@@ -30,16 +30,12 @@ type DeliveringMiddleware struct {
 }
 
 func (d DeliveringMiddleware) Deliver(ctx context.Context, delivery amqp.Delivery) {
-	mqModel := &MQModel{}
-	err := json.Unmarshal(delivery.Body, mqModel)
+	req := AsyncReq{}
+	err := json.Unmarshal(delivery.Body, &req)
 	if err != nil {
 		return
 	}
-	span := d.tracer.StartSpan(d.name + "/consume", zipkin.Parent(model.SpanContext{
-		TraceID:  mqModel.SpanModel.TraceID,
-		//ID:       mqModel.SpanModel.ID,
-		//ParentID: mqModel.SpanModel.ParentID,
-	}))
+	span := d.tracer.StartSpan(d.name + "/consume", zipkin.Parent(model.SpanContext{TraceID: req.TraceID}))
 	defer span.Finish()
 	ctx = zipkin.NewContext(ctx, span)
 	d.next.Deliver(ctx, delivery)

@@ -10,9 +10,6 @@ import (
 
 const (
 	URI                 = "amqp://guest:guest@localhost:5672/"
-	PassengerQueueName = "passenger"
-	TripQueueName = "trip"
-	TripCorrId    = "passenger_to_trip_corrID"
 )
 
 type MessageServer interface {

@@ -8,9 +8,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"google.golang.org/grpc/metadata"
 	"log"
 	"net"
 	http2 "net/http"
@@ -24,6 +21,10 @@ import (
 	"pkg/promtheus"
 	"pkg/tracing"
 	"syscall"
+
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/go-kit/kit/tracing/zipkin"
 	grpc2 "github.com/go-kit/kit/transport/grpc"
@@ -73,7 +74,7 @@ func Run() {
 	if err != nil {
 		logger.Log("NewDiscoverClient failed", err)
 	}
-	instanceID, ok := discoverClient.Register(*serviceName, "", "127.0.0.1", 0, nil, logger)
+	instanceID, ok := discoverClient.Register(*serviceName, "", "127.0.0.1", (*grpcAddr)[1:], nil, logger)
 	defer discoverClient.DeRegister(instanceID, logger)
 	if !ok {
 		log.Printf("service %s register failed", *serviceName)
@@ -90,7 +91,8 @@ func Run() {
 		logger.Log("InitPaySendRespMessageServer", "fail", "err", err)
 		os.Exit(-1)
 	}
-	go service.RecvAndGenBill(context.Background(), logger, tracer.NativeTracer) //这里构建监听服务
+	//go service.RecvAndGenBill(context.Background(), logger, tracer.NativeTracer) //这里构建监听服务
+	go service.ConsumePayQueue(context.Background(), logger, tracer.NativeTracer)
 	////////////////////////////////////////////
 	svc := service.New(getServiceMiddleware(logger))
 	eps := endpoint.New(svc, getEndpointMiddleware(logger))
@@ -136,13 +138,19 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemBilling, config.MethodGetBillList, "GetBillList histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemBilling, config.MethodGetBillList, "GetBillList count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetBillList+"/service"),
+			endpoint.TraceEndpoint(tracer.NativeTracer, config.MethodGetBillList+"/service"),
 		},
-		"GetBill" : {
+		"GetBill": {
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemBilling, config.MethodGetBill, "GetBill histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemBilling, config.MethodGetBill, "GetBill count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetBill+"/service"),
+			endpoint.TraceEndpoint(tracer.NativeTracer, config.MethodGetBill+"/service"),
+		},
+		"SetPayedAndGetPrice": {
+			endpoint.LoggingMiddleware(logger),
+			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemBilling, config.MethodSetPayedAndGetPrice, "SetPayedAndGetPrice histogram")),
+			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemBilling, config.MethodSetPayedAndGetPrice, "SetPayedAndGetPrice count")),
+			endpoint.TraceEndpoint(tracer.NativeTracer, config.MethodSetPayedAndGetPrice+"/service"),
 		},
 	}
 
@@ -200,7 +208,8 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 func initGRPCGateway(g *group.Group) {
 	mux := runtime.NewServeMux(runtime.WithMetadata(func(ctx context.Context, request *http2.Request) metadata.MD {
 		md := metadata.MD{}
-		md.Set("Priority", request.Header.Get("Priority"))
+		md.Set("Length", request.Header.Get("Length"))
+		md.Set("Trace-ID", request.Header.Get("Trace-ID"))
 		return md
 	}))
 	opts := []grpc1.DialOption{grpc1.WithInsecure()}

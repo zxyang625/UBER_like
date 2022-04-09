@@ -190,7 +190,7 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 func initGRPCGateway(g *group.Group) {
 	mux := runtime.NewServeMux(runtime.WithMetadata(func(ctx context.Context, request *http2.Request) metadata.MD {
 		md := metadata.MD{}
-		md.Set("Priority", request.Header.Get("Priority"))
+		md.Set("Length", request.Header.Get("Length"))
 		return md
 	}))
 	opts := []grpc1.DialOption{grpc1.WithInsecure()}

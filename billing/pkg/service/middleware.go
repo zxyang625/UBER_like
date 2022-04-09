@@ -15,6 +15,8 @@ type loggingMiddleware struct {
 	next   BillingService
 }
 
+var defaultLoggingMiddle = loggingMiddleware{}
+
 // LoggingMiddleware takes a logger as a dependency
 // and returns a BillingService Middleware.
 func LoggingMiddleware(logger log.Logger) Middleware {
@@ -42,4 +44,11 @@ func (l loggingMiddleware) GetBill(ctx context.Context, billNum int64) (resp *pb
 		l.logger.Log("method", "GetBill", "billNum", billNum, "resp", resp, "err", err)
 	}()
 	return l.next.GetBill(ctx, billNum)
+}
+
+func (l loggingMiddleware) SetPayedAndGetPrice(ctx context.Context, billNum int64) (rsp float32, err error) {
+	defer func() {
+		l.logger.Log("method", "SetPayedAndGetPrice", "billNum", billNum, "priority", ctx.Value("priority"), "err", err)
+	}()
+	return l.next.SetPayedAndGetPrice(ctx, billNum)
 }

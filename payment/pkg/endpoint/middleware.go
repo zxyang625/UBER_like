@@ -55,26 +55,17 @@ func TraceEndpoint(tracer *zipkin.Tracer, name string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (interface{}, error) {
 			var sc model.SpanContext
-			span := zipkin.SpanOrNoopFromContext(ctx)
-			if span == nil {
-				fmt.Println("nil")
+			traceStr := ctx.Value("Trace-ID")
+			if traceStr != nil {
+				traceID, _ := model.TraceIDFromHex(traceStr.(string))
+				sc.TraceID = traceID
 			} else {
-				fmt.Printf("%+v\n", span.Context())
-				go func() {
-					traceID := span.Context().TraceID
-					spanID := span.Context().ID
-					span := tracer.StartSpan("this_is_test", zipkin.Parent(model.SpanContext{ID: spanID, TraceID: traceID}))
-					time.Sleep(3 * time.Second)
-					defer span.Finish()
-				}()
+				if parentSpan := zipkin.SpanFromContext(ctx); parentSpan != nil {
+					sc = parentSpan.Context()
+				}
 			}
-			if parentSpan := zipkin.SpanFromContext(ctx); parentSpan != nil {
-				sc = parentSpan.Context()
-			}
-			sp := tracer.StartSpan(name, zipkin.Parent(sc))
-			defer sp.Finish()
-
-			ctx = zipkin.NewContext(ctx, sp)
+			span := tracer.StartSpan(name, zipkin.Parent(sc))
+			defer span.Finish()
 			return next(ctx, request)
 		}
 	}

@@ -33,3 +33,14 @@ type HandleFunc func(ctx context.Context, d amqp.Delivery)
 func (h HandleFunc) Deliver(ctx context.Context, d amqp.Delivery) {
 	h(ctx, d)
 }
+
+type AsyncReq struct {
+	Method      string            `json:"method"`
+	Application string            `json:"application"`
+	Service     string            `json:"service"`
+	// URL         string            `json:"url"`
+	TraceID     model.TraceID     `json:"trace_id"`
+	Priority    int               `json:"priority"`
+	Header      map[string]string `json:"header"`
+	Data        []byte            `json:"data"`
+}

@@ -10,18 +10,20 @@ import (
 // meant to be used as a helper struct, to collect all of the endpoints into a
 // single parameter.
 type Endpoints struct {
-	GenBillEndpoint     endpoint.Endpoint
-	GetBillListEndpoint endpoint.Endpoint
-	GetBillEndpoint     endpoint.Endpoint
+	GenBillEndpoint             endpoint.Endpoint
+	GetBillListEndpoint         endpoint.Endpoint
+	GetBillEndpoint             endpoint.Endpoint
+	SetPayedAndGetPriceEndpoint endpoint.Endpoint
 }
 
 // New returns a Endpoints struct that wraps the provided service, and wires in all of the
 // expected endpoint middlewares
 func New(s service.BillingService, mdw map[string][]endpoint.Middleware) Endpoints {
 	eps := Endpoints{
-		GenBillEndpoint:     MakeGenBillEndpoint(s),
-		GetBillEndpoint:     MakeGetBillEndpoint(s),
-		GetBillListEndpoint: MakeGetBillListEndpoint(s),
+		GenBillEndpoint:             MakeGenBillEndpoint(s),
+		GetBillEndpoint:             MakeGetBillEndpoint(s),
+		GetBillListEndpoint:         MakeGetBillListEndpoint(s),
+		SetPayedAndGetPriceEndpoint: MakeSetPayedAndGetPriceEndpoint(s),
 	}
 	for _, m := range mdw["GenBill"] {
 		eps.GenBillEndpoint = m(eps.GenBillEndpoint)
@@ -31,6 +33,9 @@ func New(s service.BillingService, mdw map[string][]endpoint.Middleware) Endpoin
 	}
 	for _, m := range mdw["GetBill"] {
 		eps.GetBillEndpoint = m(eps.GetBillEndpoint)
+	}
+	for _, m := range mdw["SetPayedAndGetPrice"] {
+		eps.SetPayedAndGetPriceEndpoint = m(eps.SetPayedAndGetPriceEndpoint)
 	}
 	return eps
 }

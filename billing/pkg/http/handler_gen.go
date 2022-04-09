@@ -14,5 +14,6 @@ func NewHTTPHandler(endpoints endpoint.Endpoints, options map[string][]http.Serv
 	makeGenBillHandler(m, endpoints, options["GenBill"])
 	makeGetBillListHandler(m, endpoints, options["GetBillList"])
 	makeGetBillHandler(m, endpoints, options["GetBill"])
+	makeSetPayedAndGetPriceHandler(m, endpoints, options["SetPayedAndGetPrice"])
 	return m
 }

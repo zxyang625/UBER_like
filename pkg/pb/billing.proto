@@ -19,6 +19,12 @@ service Billing {
       get: "/billing/get-bill"
     };
   };
+  rpc SetPayedAndGetPrice(SetPayedAndGetPriceRequest) returns (SetPayedAndGetPriceReply) {
+    option (google.api.http) = {
+      post: "/billing/set-payed-and-get-price"
+      body: "*"
+    };
+  }
 }
 
 message BillMsg {
@@ -59,4 +65,12 @@ message GetBillListRequest {
 
 message GetBillListReply {
   repeated BillMsg bill_list= 1;
+}
+
+message SetPayedAndGetPriceRequest {
+  int64 bill_num = 1;
+}
+
+message SetPayedAndGetPriceReply {
+  float price = 2;
 }

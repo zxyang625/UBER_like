@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/go-kit/kit/tracing/zipkin"
 	grpc2 "github.com/go-kit/kit/transport/grpc"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -73,7 +72,7 @@ func Run() {
 	if err != nil {
 		logger.Log("NewDiscoverClient failed", err)
 	}
-	instanceID, ok := discoverClient.Register(*serviceName, "", "127.0.0.1", 0, nil, logger)
+	instanceID, ok := discoverClient.Register(*serviceName, "", "127.0.0.1", (*grpcAddr)[10:], nil, logger)
 	defer discoverClient.DeRegister(instanceID, logger)
 	if !ok {
 		log.Printf("service %s register failed", *serviceName)
@@ -121,7 +120,7 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]kitendpoint.Mi
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemPayment, config.MethodPay, "Pay histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemPayment, config.MethodPay, "Pay count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodPay + "/service"),
+			endpoint.TraceEndpoint(tracer.NativeTracer, config.MethodPay + "/service"),
 		},
 	}
 
@@ -179,7 +178,8 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 func initGRPCGateway(g *group.Group) {
 	mux := runtime.NewServeMux(runtime.WithMetadata(func(ctx context.Context, request *http.Request) metadata.MD {
 		md := metadata.MD{}
-		md.Set("Priority", request.Header.Get("Priority"))
+		md.Set("Length", request.Header.Get("Length"))
+		md.Set("Trace-ID", request.Header.Get("Trace-ID"))
 		return md
 	}))
 	opts := []grpc1.DialOption{grpc1.WithInsecure()}

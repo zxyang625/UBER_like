@@ -6,6 +6,8 @@ import (
 	endpoint "github.com/go-kit/kit/endpoint"
 	log "github.com/go-kit/kit/log"
 	metrics "github.com/go-kit/kit/metrics"
+	"github.com/openzipkin/zipkin-go"
+	"github.com/openzipkin/zipkin-go/model"
 	"pkg/config"
 	"time"
 )
@@ -44,6 +46,26 @@ func CountingMiddleware(count metrics.Counter) endpoint.Middleware {
 			defer func(begin time.Time) {
 				count.With(config.SystemBilling + "_counter", fmt.Sprint(err == nil)).Add(1)
 			}(time.Now())
+			return next(ctx, request)
+		}
+	}
+}
+
+func TraceEndpoint(tracer *zipkin.Tracer, name string) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (interface{}, error) {
+			var sc model.SpanContext
+			traceStr := ctx.Value("Trace-ID")
+			if traceStr != nil {
+				traceID, _ := model.TraceIDFromHex(traceStr.(string))
+				sc.TraceID = traceID
+			} else {
+				if parentSpan := zipkin.SpanFromContext(ctx); parentSpan != nil {
+					sc = parentSpan.Context()
+				}
+			}
+			span := tracer.StartSpan(name, zipkin.Parent(sc))
+			defer span.Finish()
 			return next(ctx, request)
 		}
 	}

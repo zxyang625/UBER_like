@@ -19,6 +19,7 @@ const (
 	MethodGenBill 			= "GenBill"
 	MethodGetBillList 		= "GetBillList"
 	MethodGetBill           = "GetBill"
+	MethodSetPayedAndGetPrice = "SetPayedAndGetPrice"
 )
 
 var (

@@ -128,3 +128,41 @@ func (e Endpoints) GetBill(ctx context.Context, billNum int64) (resp *pb.BillMsg
 	}
 	return response.(GetBillResponse).Resp, response.(GetBillResponse).Err
 }
+
+// SetPayedAndGetPriceRequest collects the request parameters for the SetPayedAndGetPrice method.
+type SetPayedAndGetPriceRequest struct {
+	BillNum int64 `json:"bill_num"`
+}
+
+// SetPayedAndGetPriceResponse collects the response parameters for the SetPayedAndGetPrice method.
+type SetPayedAndGetPriceResponse struct {
+	F0 float32 `json:"f0"`
+	E1 error   `json:"e1"`
+}
+
+// MakeSetPayedAndGetPriceEndpoint returns an endpoint that invokes SetPayedAndGetPrice on the service.
+func MakeSetPayedAndGetPriceEndpoint(s service.BillingService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(SetPayedAndGetPriceRequest)
+		f0, e1 := s.SetPayedAndGetPrice(ctx, req.BillNum)
+		return SetPayedAndGetPriceResponse{
+			E1: e1,
+			F0: f0,
+		}, nil
+	}
+}
+
+// Failed implements Failer.
+func (r SetPayedAndGetPriceResponse) Failed() error {
+	return r.E1
+}
+
+// SetPayedAndGetPrice implements Service. Primarily useful in a client.
+func (e Endpoints) SetPayedAndGetPrice(ctx context.Context, billNum int64) (f0 float32, e1 error) {
+	request := SetPayedAndGetPriceRequest{BillNum: billNum}
+	response, err := e.SetPayedAndGetPriceEndpoint(ctx, request)
+	if err != nil {
+		return
+	}
+	return response.(SetPayedAndGetPriceResponse).F0, response.(SetPayedAndGetPriceResponse).E1
+}

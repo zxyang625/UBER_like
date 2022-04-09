@@ -44,13 +44,14 @@ func GetInstance(instances []*api.ServiceEntry) (addr string, port int, err erro
 	return loadBalancer.Select(instances)
 }
 
-func (d *DiscoverClientImpl) Register(serviceName, healthCheckUrl, instanceHost string, instancePort int, meta map[string]string, logger kitlog.Logger) (string, bool) {
+func (d *DiscoverClientImpl) Register(serviceName, healthCheckUrl, instanceHost, instancePort string, meta map[string]string, logger kitlog.Logger) (string, bool) {
 	instanceID := serviceName + "-" + uuid.New().String()
+	port, _ := strconv.Atoi(instancePort)
 	serviceRegistration := &api.AgentServiceRegistration{
 		ID: instanceID,
 		Name: serviceName,
 		Address: instanceHost,
-		Port: instancePort,
+		Port: port + 1,
 		Meta: meta,
 		Check: &api.AgentServiceCheck{
 			DeregisterCriticalServiceAfter: "30s",
@@ -59,22 +60,22 @@ func (d *DiscoverClientImpl) Register(serviceName, healthCheckUrl, instanceHost 
 			Notes: "Consul check service health status.",
 		},
 	}
-	if instanceHost == "" {
-		serviceRegistration.Address = "127.0.0.1"
-	}
-	if instancePort == 0 {
-		if d.UseGRPC {
-			instancePort = 8082
-			serviceRegistration.Port = 8083
-		} else {
-			instancePort = 8081
-		}
-	}
+	//if instanceHost == "" {
+	//	serviceRegistration.Address = "127.0.0.1"
+	//}
+	//if port == 0 {
+	//	if d.UseGRPC {
+	//		port = 8082
+	//		serviceRegistration.Port = 8083
+	//	} else {
+	//		port = 8081
+	//	}
+	//}
 	if healthCheckUrl == "" {
 		if d.UseGRPC {
-			serviceRegistration.Check.GRPC = instanceHost + ":" + strconv.Itoa(instancePort) + "/" + serviceName
+			serviceRegistration.Check.GRPC = instanceHost + ":" + strconv.Itoa(port) + "/" + serviceName
 		} else {
-			serviceRegistration.Check.HTTP = "http://" + instanceHost + ":" + strconv.Itoa(instancePort) + "/health-check"
+			serviceRegistration.Check.HTTP = "http://" + instanceHost + ":" + strconv.Itoa(port) + "/health-check"
 		}
 	}
 	err := d.client.Register(serviceRegistration)

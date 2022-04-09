@@ -12,6 +12,14 @@ import (
 	"strings"
 )
 
+const (
+	GatewayURL = "http://localhost:10000"
+)
+
+type ServiceInfo struct {
+
+}
+
 func NewReverseProxy(consulHost string, consulPort int, logger kitlog.Logger) (*httputil.ReverseProxy, error) {
 	client, err := discover.NewDiscoverClient(consulHost, consulPort, true)
 	if err != nil {
@@ -26,7 +34,6 @@ func NewReverseProxy(consulHost string, consulPort int, logger kitlog.Logger) (*
 		}
 		pathArray := strings.Split(reqPath, "/")
 		serviceName := pathArray[1]
-		log.Println(pathArray[0], pathArray[1], pathArray[2])
 		instances, err := client.DiscoverServices(serviceName, "", true)
 		if err != nil {
 			logger.Log("service name", serviceName, "msg", "query instances failed", "err", err)
@@ -40,16 +47,17 @@ func NewReverseProxy(consulHost string, consulPort int, logger kitlog.Logger) (*
 
 		destPath := strings.Join(pathArray[1:], "/")
 		addr, port, err := loadbalance.NewLoadBalancer().Select(instances)
+		log.Println(addr, port)
 		req.URL.Scheme = "http"
 		req.URL.Host = fmt.Sprintf("%s:%d", addr, port)
 		req.URL.Path = "/" + destPath
 
-		priority := req.Header.Get("Priority")
+		priority := req.Header.Get("Length")
 		if priority == "" {
-			req.Header.Set("Priority", "0")
+			req.Header.Set("Length", "0")
 		} else {
 			num, _ := strconv.Atoi(priority)
-			req.Header.Set("Priority", fmt.Sprintf("%d", num + 1))
+			req.Header.Set("Length", fmt.Sprintf("%d", num))
 		}
 	}
 	return &httputil.ReverseProxy{

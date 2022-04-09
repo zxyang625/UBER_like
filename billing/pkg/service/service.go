@@ -4,16 +4,18 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
-	"github.com/go-kit/kit/log"
-	"github.com/golang/protobuf/proto"
-	"github.com/openzipkin/zipkin-go"
-	"github.com/streadway/amqp"
+	"fmt"
 	"math"
 	"math/rand"
 	"pkg/dao/models"
 	"pkg/dao/mq"
 	"pkg/dao/redis"
 	"pkg/pb"
+
+	"github.com/go-kit/kit/log"
+	"github.com/golang/protobuf/proto"
+	"github.com/openzipkin/zipkin-go"
+	"github.com/streadway/amqp"
 )
 
 // BillingService describes the service.
@@ -21,11 +23,22 @@ type BillingService interface {
 	GenBill(ctx context.Context, req *pb.GenBillRequest) (resp *pb.GenBillReply, err error)
 	GetBillList(ctx context.Context, userId int64) (resp []*pb.BillMsg, err error)
 	GetBill(ctx context.Context, billNum int64) (resp *pb.BillMsg, err error)
+	SetPayedAndGetPrice(ctx context.Context, billNum int64) (float32, error)
 }
 
 type basicBillingService struct{}
 
 var defaultBasicBillingService = &basicBillingService{}
+
+func (b *basicBillingService) SetPayedAndGetPrice(ctx context.Context, billNum int64) (float32, error) {
+	fmt.Println("ppppp", ctx.Value("Length"))
+	fmt.Println("ttttt", ctx.Value("Trace-ID"))
+	price, err := models.SetPayedAndGetPrice(billNum)
+	if err != nil {
+		return 0, fmt.Errorf("SetPayedAndGetPrice failed, err: %v", err)
+	}
+	return price, err
+}
 
 func (b *basicBillingService) GenBill(ctx context.Context, req *pb.GenBillRequest) (resp *pb.GenBillReply, err error) {
 	bill1 := &models.Bill{
@@ -94,7 +107,7 @@ func New(middleware []Middleware) BillingService {
 
 func RecvAndGenBill(ctx context.Context, logger log.Logger, tracer *zipkin.Tracer) {
 	go func(*zipkin.Tracer) {
-		deliverServer := mq.InitDeliverMiddleware(tracer, "billing") (mq.HandleFunc(func(ctx context.Context, d amqp.Delivery) {
+		deliverServer := mq.InitDeliverMiddleware(tracer, "billing")(mq.HandleFunc(func(ctx context.Context, d amqp.Delivery) {
 			mqModel := &mq.MQModel{}
 			err := json.Unmarshal(d.Body, mqModel)
 			if err != nil {
@@ -111,17 +124,17 @@ func RecvAndGenBill(ctx context.Context, logger log.Logger, tracer *zipkin.Trace
 			logger.Log("method", "consume", "name", ConsumeTripQueueName, "err", "null")
 
 			err = redis.Billing{}.LPUSH(&pb.BillMsg{
-				BillNum:              0,
-				Price:                rand.Float32(),		//价格随机计算
-				StartTime:            r.GetStartTime(),
-				EndTime:              r.GetEndTime(),
-				Origin:               r.GetOrigin(),
-				Destination:          r.GetDestination(),
-				PassengerName:        r.GetPassengerName(),
-				DriverName:           r.GetDriverName(),
-				Payed:                false,
-				PassengerId:          r.GetPassengerId(),
-				DriverId:             r.GetDriverId(),
+				BillNum:       0,
+				Price:         rand.Float32(), //价格随机计算
+				StartTime:     r.GetStartTime(),
+				EndTime:       r.GetEndTime(),
+				Origin:        r.GetOrigin(),
+				Destination:   r.GetDestination(),
+				PassengerName: r.GetPassengerName(),
+				DriverName:    r.GetDriverName(),
+				Payed:         false,
+				PassengerId:   r.GetPassengerId(),
+				DriverId:      r.GetDriverId(),
 			})
 			if err != nil {
 				logger.Log("method", "LPUSH", "name", "bill_list", "err", err)
@@ -169,7 +182,7 @@ func RecvAndGenBill(ctx context.Context, logger log.Logger, tracer *zipkin.Trace
 			logger.Log("method", "proto.Unmarshal", "err", err)
 		}
 		_, err = defaultBasicBillingService.GenBill(ctx, &pb.GenBillRequest{
-			BillMsg:  bill,
+			BillMsg: bill,
 		})
 		if err != nil {
 			logger.Log("method", "GenBill", "err", err)
