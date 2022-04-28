@@ -8,7 +8,6 @@ import (
 	service "driver/pkg/service"
 	"flag"
 	"fmt"
-	"github.com/go-kit/kit/tracing/zipkin"
 	grpc2 "github.com/go-kit/kit/transport/grpc"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -43,7 +42,7 @@ var logger kitlog.Logger
 var fs = flag.NewFlagSet("driver", flag.ExitOnError)
 var debugAddr = fs.String("debug-addr", ":8080", "Debug and metrics listen address")
 var httpAddr = fs.String("http-addr", ":8081", "HTTP listen address")
-var grpcAddr = fs.String("grpc-addr", "127.0.0.1:8082", "gRPC listen address")
+var grpcAddr = fs.String("grpc-addr", ":8082", "gRPC listen address")
 var zipkinURL = fs.String("zipkin-url", tracing.DefaultZipkinURL, "Enable Zipkin tracing via a collector URL e.g. http://localhost:9411/api/v1/spans")
 var serviceName = fs.String("service-name", "driver", "default service name")
 var consulAddr = fs.String("consul-addr", "127.0.0.1", "consul listen addr")
@@ -73,7 +72,7 @@ func Run() {
 	if err != nil {
 		logger.Log("NewDiscoverClient failed", err)
 	}
-	instanceID, ok := discoverClient.Register(*serviceName, "", "127.0.0.1", 0, nil, logger)
+	instanceID, ok := discoverClient.Register(*serviceName, "", "127.0.0.1", (*grpcAddr)[1:], nil, logger)
 	defer discoverClient.DeRegister(instanceID, logger)
 	if !ok {
 		log.Printf("service %s register failed", *serviceName)
@@ -124,13 +123,13 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemDriver, config.MethodGetDriverInfo, "GetDriverInfo histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemDriver, config.MethodGetDriverInfo, "GetDriverInfo count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetDriverInfo+"/service"),
+			endpoint.TraceEndpoint(tracer.NativeTracer, config.MethodGetDriverInfo+"/service"),
 		},
 		"TakeOrder": {
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemDriver, config.MethodTakeOrder, "TakeOrder histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemDriver, config.MethodTakeOrder, "TakeOrder count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodTakeOrder+"/service"),
+			endpoint.TraceEndpoint(tracer.NativeTracer, config.MethodTakeOrder+"/service"),
 		},
 	}
 
@@ -184,10 +183,12 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 	})
 
 }
+
 func initGRPCGateway(g *group.Group) {
 	mux := runtime.NewServeMux(runtime.WithMetadata(func(ctx context.Context, request *http2.Request) metadata.MD {
 		md := metadata.MD{}
 		md.Set("Length", request.Header.Get("Length"))
+		md.Set("Trace-ID", request.Header.Get("Trace-ID"))
 		return md
 	}))
 	opts := []grpc1.DialOption{grpc1.WithInsecure()}

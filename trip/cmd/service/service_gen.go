@@ -26,7 +26,7 @@ func defaultHttpOptions(logger log.Logger, tracer *tracing.TracingImpl) map[stri
 	return options
 }
 func defaultGRPCOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]grpc.ServerOption {
-	options := map[string][]grpc.ServerOption{"GenTrip": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GenTrip", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)}}
+	options := map[string][]grpc.ServerOption{"GenTrip": {grpc.ServerErrorLogger(logger)}}
 	return options
 }
 func addDefaultEndpointMiddleware(logger log.Logger, duration *prometheus.Summary, mw map[string][]endpoint1.Middleware) {

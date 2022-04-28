@@ -44,7 +44,7 @@ var logger kitlog.Logger
 var fs = flag.NewFlagSet("billing", flag.ExitOnError)
 var debugAddr = fs.String("debug-addr", ":8080", "Debug and metrics listen address")
 var httpAddr = fs.String("http-addr", ":8081", "HTTP listen address")
-var grpcAddr = fs.String("grpc-addr", "127.0.0.1:8082", "gRPC listen address")
+var grpcAddr = fs.String("grpc-addr", ":8082", "gRPC listen address")
 var zipkinURL = fs.String("zipkin-url", tracing.DefaultZipkinURL, "Enable Zipkin tracing via a collector URL e.g. http://localhost:9411/api/v1/spans")
 var serviceName = fs.String("service-name", "billing", "default service name")
 var consulAddr = fs.String("consul-addr", "127.0.0.1", "consul listen addr")
@@ -86,13 +86,13 @@ func Run() {
 		logger.Log("InitMessageServer", "fail", "err", err)
 		os.Exit(-1)
 	}
-	err = service.InitPaySendRespMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "billing_msg/"))
-	if err != nil {
-		logger.Log("InitPaySendRespMessageServer", "fail", "err", err)
-		os.Exit(-1)
-	}
+	//err = service.InitPaySendRespMessageServer(mq.InitLoggingMiddleware(logger), mq.InitTracingMiddleware(tracer.NativeTracer, "billing_msg/"))
+	//if err != nil {
+	//	logger.Log("InitPaySendRespMessageServer", "fail", "err", err)
+	//	os.Exit(-1)
+	//}
 	//go service.RecvAndGenBill(context.Background(), logger, tracer.NativeTracer) //这里构建监听服务
-	go service.ConsumePayQueue(context.Background(), logger, tracer.NativeTracer)
+	//go service.ConsumePayQueue(context.Background(), logger, tracer.NativeTracer)
 	////////////////////////////////////////////
 	svc := service.New(getServiceMiddleware(logger))
 	eps := endpoint.New(svc, getEndpointMiddleware(logger))

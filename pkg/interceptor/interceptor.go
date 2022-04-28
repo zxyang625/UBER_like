@@ -2,6 +2,7 @@ package interceptor
 
 import (
 	"context"
+	"github.com/openzipkin/zipkin-go/idgenerator"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	Err "pkg/error"
@@ -21,9 +22,11 @@ func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInf
 		return nil, Err.New(Err.InterceptorInvalidMeta, "priority value not found")
 	}
 	num, _ := strconv.Atoi(priority[0])
-	ctx = context.WithValue(ctx, "Length", num + 1)
-	if len(md.Get("Trace-ID")) > 0 {
+	ctx = context.WithValue(ctx, "Length", num+1)
+	if md.Get("Trace-ID")[0] != "" {
 		ctx = context.WithValue(ctx, "Trace-ID", md.Get("Trace-ID")[0])
+	} else {
+		ctx = context.WithValue(ctx, "Trace-ID", idgenerator.NewRandom64().TraceID().String())
 	}
 	//继续处理请求
 	return handler(ctx, req)

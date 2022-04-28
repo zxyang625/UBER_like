@@ -11,12 +11,12 @@ service Billing {
   };
   rpc GetBillList(GetBillListRequest) returns (GetBillListReply) {
     option (google.api.http) = {
-      get: "/billing/get-bill-list"
+      get: "/billing/get-bill-list/{user_id}"
     };
   };
   rpc GetBill(GetBillRequest) returns (GetBillReply) {
     option (google.api.http) = {
-      get: "/billing/get-bill"
+      get: "/billing/get-bill/{bill_num}"
     };
   };
   rpc SetPayedAndGetPrice(SetPayedAndGetPriceRequest) returns (SetPayedAndGetPriceReply) {

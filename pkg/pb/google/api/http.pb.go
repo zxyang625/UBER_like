@@ -298,11 +298,11 @@ func (m *Http) GetFullyDecodeReservedExpansion() bool {
 // Document](https://developers.google.com/discovery/v1/reference/apis) as
 // `{+var}`.
 //
-// ## Using gRPC API Service Configuration
+// ## Using gRPC API OriginService Configuration
 //
-// gRPC API Service Configuration (service config) is a configuration language
+// gRPC API OriginService Configuration (service config) is a configuration language
 // for configuring a gRPC service to become a user-facing product. The
-// service config is simply the YAML representation of the `google.api.Service`
+// service config is simply the YAML representation of the `google.api.OriginService`
 // proto message.
 //
 // As an alternative to annotating your proto file, you can configure gRPC

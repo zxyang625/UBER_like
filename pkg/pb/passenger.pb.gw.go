@@ -33,19 +33,37 @@ var _ = utilities.NewDoubleArray
 var _ = descriptor.ForMessage
 var _ = metadata.Join
 
-var (
-	filter_Passenger_GetPassengerInfo_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Passenger_GetPassengerInfo_0(ctx context.Context, marshaler runtime.Marshaler, client PassengerClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetPassengerInfoRequest
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["username"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "username")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Passenger_GetPassengerInfo_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.Username, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "username", err)
+	}
+
+	val, ok = pathParams["password"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "password")
+	}
+
+	protoReq.Password, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "password", err)
 	}
 
 	msg, err := client.GetPassengerInfo(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -57,11 +75,33 @@ func local_request_Passenger_GetPassengerInfo_0(ctx context.Context, marshaler r
 	var protoReq GetPassengerInfoRequest
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["username"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "username")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Passenger_GetPassengerInfo_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.Username, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "username", err)
+	}
+
+	val, ok = pathParams["password"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "password")
+	}
+
+	protoReq.Password, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "password", err)
 	}
 
 	msg, err := server.GetPassengerInfo(ctx, &protoReq)
@@ -240,7 +280,7 @@ func RegisterPassengerHandlerClient(ctx context.Context, mux *runtime.ServeMux, 
 }
 
 var (
-	pattern_Passenger_GetPassengerInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"passenger", "get-passenger-info"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Passenger_GetPassengerInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3}, []string{"passenger", "get-passenger-info", "username", "password"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Passenger_PublishOrder_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"passenger", "publish-order"}, "", runtime.AssumeColonVerbOpt(true)))
 )

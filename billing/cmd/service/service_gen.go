@@ -22,19 +22,19 @@ func createService(endpoints endpoint.Endpoints) (g *group.Group) {
 }
 func defaultHttpOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]http.ServerOption {
 	options := map[string][]http.ServerOption{
-		"GenBill":     {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "GenBill", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)},
-		"GetBill":     {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "GetBill", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)},
-		"GetBillList": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "GetBillList", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)},
+		"GenBill":             {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "GenBill", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)},
+		"GetBill":             {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "GetBill", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)},
+		"GetBillList":         {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "GetBillList", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)},
 		"SetPayedAndGetPrice": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "SetPayedAndGetPrice", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)},
 	}
 	return options
 }
 func defaultGRPCOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]grpc.ServerOption {
 	options := map[string][]grpc.ServerOption{
-		"GenBill":     {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GenBill", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
-		"GetBill":     {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GetBill", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
-		"GetBillList": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GetBillList", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
-		"SetPayedAndGetPrice": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "SetPayedAndGetPrice", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
+		"GenBill":             {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GenBill", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
+		"GetBill":             {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GetBill", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
+		"GetBillList":         {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GetBillList", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
+		"SetPayedAndGetPrice": {grpc.ServerErrorLogger(logger)}, //, grpc.ServerBefore(opentracing.GRPCToContext(tracer, "SetPayedAndGetPrice", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)
 	}
 	return options
 }

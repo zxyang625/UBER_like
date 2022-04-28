@@ -44,7 +44,7 @@ type Failure interface {
 	Failed() error
 }
 
-// Pay implements Service. Primarily useful in a client.
+// Pay implements OriginService. Primarily useful in a client.
 func (e Endpoints) Pay(ctx context.Context, billNum int64, accountNum int64, payPassword string) (msg string, err error) {
 	request := PayRequest{
 		AccountNum:  accountNum,

@@ -43,7 +43,7 @@ type Failure interface {
 	Failed() error
 }
 
-// NoticeTrip implements Service. Primarily useful in a client.
+// NoticeTrip implements OriginService. Primarily useful in a client.
 func (e Endpoints) NoticeTrip(ctx context.Context, req *pb.NoticeTripRequest) (resp *pb.NoticeTripReply, err error) {
 	request := NoticeTripRequest{Req: req}
 	response, err := e.NoticeTripEndpoint(ctx, request)
@@ -81,7 +81,7 @@ func (r NoticeBillResponse) Failed() error {
 	return r.Err
 }
 
-// NoticeBill implements Service. Primarily useful in a client.
+// NoticeBill implements OriginService. Primarily useful in a client.
 func (e Endpoints) NoticeBill(ctx context.Context, req *pb.NoticeBillRequest) (resp *pb.NoticeBillReply, err error) {
 	request := NoticeBillRequest{Req: req}
 	response, err := e.NoticeBillEndpoint(ctx, request)

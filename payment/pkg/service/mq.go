@@ -13,7 +13,7 @@ const (
 
 func InitMessageServer(mdws ...mq.Middleware) error {
 	var err error
-	PayMessageServer, err = mq.NewMessageServer("pay_queue")
+	PayMessageServer, err = mq.NewMessageServer("pay_queue", 3)
 	if err != nil {
 		return err
 	}

@@ -3,8 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/openzipkin/zipkin-go"
+	"github.com/openzipkin/zipkin-go/model"
 	"github.com/streadway/amqp"
 	"net/http"
 	"pkg/dao/models"
@@ -20,28 +19,26 @@ type PaymentService interface {
 }
 
 type basicPaymentService struct {
-
 }
 
 func (b *basicPaymentService) Pay(ctx context.Context, billNum int64, accountNum int64, payPassword string) (msg string, err error) {
-	fmt.Println("ppppp", ctx.Value("Length"))
-	fmt.Println("ttttt", ctx.Value("Trace-ID"))
+	traceID, _ := model.TraceIDFromHex(ctx.Value("Trace-ID").(string))
 	account, err := models.GetAccount(accountNum, payPassword)
 	if err != nil {
 		return "GetAccount fail", err
 	}
 	///////////////////////////////////////////
 	data, _ := json.Marshal(&pb.SetPayedAndGetPriceRequest{BillNum: billNum})
-	span := zipkin.SpanOrNoopFromContext(ctx)
 	req := mq.AsyncReq{
-		Method:      http.MethodPost,
-		Application: "billing",
-		Service:     "set-payed-and-get-price",
-		//URL:         "http://localhost:10000/billing/set-payed-and-get-price",
-		TraceID:     span.Context().TraceID,
-		Priority:    ctx.Value("Length").(int),
-		Header:      nil,
-		Data:        data,
+		Method:        http.MethodPost,
+		OriginApp:     "payment",
+		OriginService: "pay",
+		DestApp:       "billing",
+		DestService:   "set-payed-and-get-price",
+		TraceID:       traceID,
+		Priority:      ctx.Value("Length").(int),
+		Header:        nil,
+		Data:          data,
 	}
 
 	mqData, err := json.Marshal(&req)
@@ -49,7 +46,7 @@ func (b *basicPaymentService) Pay(ctx context.Context, billNum int64, accountNum
 		return "pay fail", err
 	}
 	/////////////////////////////////////////////
-	err = PayMessageServer.Publish(ctx, PublishQueueName, mqData)
+	err = PayMessageServer.Publish(ctx, PublishQueueName, ctx.Value("Length").(int), mqData)
 	if err != nil {
 		return "pay fail", err
 	}
@@ -79,8 +76,7 @@ func (b *basicPaymentService) Pay(ctx context.Context, billNum int64, accountNum
 
 // NewBasicPaymentService returns a naive, stateless implementation of PaymentService.
 func NewBasicPaymentService() PaymentService {
-	return &basicPaymentService{
-	}
+	return &basicPaymentService{}
 }
 
 // New returns a PaymentService with all of the expected middleware wired in.

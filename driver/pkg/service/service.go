@@ -4,13 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/golang/protobuf/proto"
-	"github.com/openzipkin/zipkin-go"
-	"github.com/openzipkin/zipkin-go/model"
-	"github.com/streadway/amqp"
 	"pkg/dao/models"
-	"pkg/dao/mq"
-	Err "pkg/error"
 	"pkg/pb"
 	"time"
 )
@@ -43,46 +37,51 @@ func (b *basicDriverService) GetDriverInfo(ctx context.Context, req *pb.GetDrive
 }
 
 func (b *basicDriverService) TakeOrder(ctx context.Context, req *pb.TakeOrderRequest) (resp *pb.TakeOrderReply, err error) {
-	data, err := proto.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
-	span := zipkin.SpanOrNoopFromContext(ctx)
-	mqModel := mq.MQModel{
-		Data: data,
-		SpanModel: model.SpanModel{
-			SpanContext:    model.SpanContext{
-				TraceID:  span.Context().TraceID,
-				ID:       span.Context().ID,
-				ParentID: span.Context().ParentID,
-			},
-		},
-	}
-	mqData, err := json.Marshal(mqModel)
-	if err != nil {
-		return nil, err
-	}
-	err = DriverMessageServer.Publish(ctx, PublishQueueName, mqData)
-	if err != nil {
-		return nil, err
-	}
+	//data, err := proto.Marshal(req)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//span := zipkin.SpanOrNoopFromContext(ctx)
+	//mqModel := mq.MQModel{
+	//	Data: data,
+	//	SpanModel: model.SpanModel{
+	//		SpanContext:    model.SpanContext{
+	//			TraceID:  span.Context().TraceID,
+	//			ID:       span.Context().ID,
+	//			ParentID: span.Context().ParentID,
+	//		},
+	//	},
+	//}
+	//mqData, err := json.Marshal(mqModel)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//err = DriverMessageServer.Publish(ctx, PublishQueueName, 0, mqData)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//resp = &pb.TakeOrderReply{}
+	//c := make(chan struct{}, 1)
+	//d := amqp.Delivery{}
+	//go func() {
+	//	d, err = DriverMessageServer.ReceiveResp(ctx)
+	//	c <- struct{}{}
+	//}()
+	//select {
+	//case <-c:
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	err = proto.Unmarshal(d.Body, resp)
+	//	return
+	//case <-time.After(time.Second):
+	//	return nil, Err.New(Err.RPCRequestTimeout, "TakeOrder timeout")
+	//}
+	time.Sleep(10 * time.Millisecond)
 	resp = &pb.TakeOrderReply{}
-	c := make(chan struct{}, 1)
-	d := amqp.Delivery{}
-	go func() {
-		d, err = DriverMessageServer.ReceiveResp(ctx)
-		c <- struct{}{}
-	}()
-	select {
-	case <-c:
-		if err != nil {
-			return nil, err
-		}
-		err = proto.Unmarshal(d.Body, resp)
-		return
-	case <-time.After(time.Second):
-		return nil, Err.New(Err.RPCRequestTimeout, "TakeOrder timeout")
-	}
+	resp.Msg = "success"
+	resp.Status = true
+	return resp, nil
 }
 
 // NewBasicDriverService returns a naive, stateless implementation of DriverService.

@@ -13,7 +13,7 @@ const (
 
 func InitMessageServer(mdws ...mq.Middleware) error {
 	var err error
-	DriverMessageServer, err = mq.NewMessageServer("driver_queue")
+	DriverMessageServer, err = mq.NewMessageServer("driver_queue", 3)
 	if err != nil {
 		return err
 	}

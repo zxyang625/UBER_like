@@ -20,7 +20,7 @@ func createService(endpoints endpoint.Endpoints) (g *group.Group) {
 	initGRPCHandler(endpoints, g)
 	return g
 }
-											//TODO:
+
 func defaultHttpOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]http.ServerOption {
 	options := map[string][]http.ServerOption{
 		"GetPassengerInfo": {http.ServerErrorEncoder(http1.ErrorEncoder), http.ServerErrorLogger(logger), http.ServerBefore(opentracing.HTTPToContext(tracer, "GetPassengerInfo", logger)), zipkin.HTTPServerTrace(tracer.NativeTracer)},
@@ -30,9 +30,8 @@ func defaultHttpOptions(logger log.Logger, tracer *tracing.TracingImpl) map[stri
 }
 func defaultGRPCOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]grpc.ServerOption {
 	options := map[string][]grpc.ServerOption{
-		//TODO:
-		"GetPassengerInfo": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "server_GetPassengerInfo", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
-		"PublishOrder":     {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "server_PublishOrder", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
+		"GetPassengerInfo": {grpc.ServerErrorLogger(logger)},
+		"PublishOrder":     {grpc.ServerErrorLogger(logger)},
 	}
 	return options
 }

@@ -29,8 +29,8 @@ func defaultHttpOptions(logger log.Logger, tracer *tracing.TracingImpl) map[stri
 }
 func defaultGRPCOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]grpc.ServerOption {
 	options := map[string][]grpc.ServerOption{
-		"GetDriverInfo": {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GetDriverInfo", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
-		"TakeOrder":     {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "TakeOrder", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
+		"GetDriverInfo": {grpc.ServerErrorLogger(logger)},
+		"TakeOrder":     {grpc.ServerErrorLogger(logger)},
 	}
 	return options
 }

@@ -6,7 +6,11 @@ import (
 	endpoint "github.com/go-kit/kit/endpoint"
 	log "github.com/go-kit/kit/log"
 	metrics "github.com/go-kit/kit/metrics"
+	"github.com/openzipkin/zipkin-go"
+	"github.com/openzipkin/zipkin-go/idgenerator"
+	"github.com/openzipkin/zipkin-go/model"
 	"pkg/config"
+	"strconv"
 	"time"
 )
 
@@ -44,6 +48,36 @@ func LoggingMiddleware(logger log.Logger) endpoint.Middleware {
 			defer func(begin time.Time) {
 				logger.Log("transport_error", err, "took", time.Since(begin).Microseconds())
 			}(time.Now())
+			return next(ctx, request)
+		}
+	}
+}
+
+func TraceEndpoint(tracer *zipkin.Tracer, name string) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (interface{}, error) {
+			//var sc model.SpanContext
+			//traceStr := ctx.Value("Trace-ID")
+			//if traceStr != nil {
+			//	traceID, _ := model.TraceIDFromHex(traceStr.(string))
+			//	sc.TraceID = traceID
+			//} else {
+			//	if parentSpan := zipkin.SpanFromContext(ctx); parentSpan != nil {
+			//		sc = parentSpan.Context()
+			//	}
+			//}
+			//span := tracer.StartSpan(name, zipkin.Parent(sc))
+			//defer span.Finish()
+			traceStr := ctx.Value("Trace-ID")
+			traceID := model.TraceID{}
+			if traceStr == nil {
+				traceID = idgenerator.NewRandom64().TraceID()
+			} else {
+				traceID, _ = model.TraceIDFromHex(traceStr.(string))
+			}
+			span := tracer.StartSpan(name, zipkin.Parent(model.SpanContext{TraceID: traceID}))
+			span.Tag("Length", strconv.Itoa(ctx.Value("Length").(int)))
+			defer span.Finish()
 			return next(ctx, request)
 		}
 	}

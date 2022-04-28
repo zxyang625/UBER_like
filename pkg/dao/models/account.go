@@ -40,7 +40,7 @@ func DelAccount(accountNum int64) (err error) {
 
 func GetAsset(accountNum int64) (float32, error) {
 	account := &Account{}
-	err := db.Model(&Account{}).Select("Asset").Where("account_num = ?", accountNum).First(&account).Error
+	err := db.Model(&Account{}).Select("asset").Where("account_num = ?", accountNum).First(&account).Error
 	if err != nil {
 		return 0, err
 	}

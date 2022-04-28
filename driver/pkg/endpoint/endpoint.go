@@ -15,7 +15,7 @@ type GetDriverInfoRequest struct {
 // GetDriverInfoResponse collects the response parameters for the GetDriverInfo method.
 type GetDriverInfoResponse struct {
 	Resp *pb.GetDriverInfoReply `json:"resp"`
-	Err  error               `json:"err"`
+	Err  error                  `json:"err"`
 }
 
 // MakeGetDriverInfoEndpoint returns an endpoint that invokes GetDriverInfo on the service.
@@ -70,7 +70,7 @@ type Failure interface {
 	Failed() error
 }
 
-// GetDriverInfo implements Service. Primarily useful in a client.
+// GetDriverInfo implements OriginService. Primarily useful in a client.
 func (e Endpoints) GetDriverInfo(ctx context.Context, req *pb.GetDriverInfoRequest) (resp *pb.GetDriverInfoReply, err error) {
 	request := GetDriverInfoRequest{Req: req}
 	response, err := e.GetDriverInfoEndpoint(ctx, request)
@@ -80,7 +80,7 @@ func (e Endpoints) GetDriverInfo(ctx context.Context, req *pb.GetDriverInfoReque
 	return response.(GetDriverInfoResponse).Resp, response.(GetDriverInfoResponse).Err
 }
 
-// TakeOrder implements Service. Primarily useful in a client.
+// TakeOrder implements OriginService. Primarily useful in a client.
 func (e Endpoints) TakeOrder(ctx context.Context, req *pb.TakeOrderRequest) (resp *pb.TakeOrderReply, err error) {
 	request := TakeOrderRequest{Req: req}
 	response, err := e.TakeOrderEndpoint(ctx, request)

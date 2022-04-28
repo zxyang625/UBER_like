@@ -7,8 +7,7 @@ package pb;
 service Passenger {
  rpc GetPassengerInfo (GetPassengerInfoRequest) returns (GetPassengerInfoReply) {
   option (google.api.http) = {
-   get: "/passenger/get-passenger-info"
-   //body: "*"
+   get: "/passenger/get-passenger-info/{username}/{password}"
   };
  }
  rpc PublishOrder     (PublishOrderRequest    ) returns (PublishOrderReply    ) {

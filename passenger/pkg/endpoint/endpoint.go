@@ -70,7 +70,7 @@ type Failure interface {
 	Failed() error
 }
 
-// GetPassengerInfo implements Service. Primarily useful in a client.
+// GetPassengerInfo implements OriginService. Primarily useful in a client.
 func (e Endpoints) GetPassengerInfo(ctx context.Context, req *pb.GetPassengerInfoRequest) (resp *pb.GetPassengerInfoReply, err error) {
 	request := GetPassengerInfoRequest{Req: req}
 	response, err := e.GetPassengerInfoEndpoint(ctx, request)
@@ -80,7 +80,7 @@ func (e Endpoints) GetPassengerInfo(ctx context.Context, req *pb.GetPassengerInf
 	return response.(GetPassengerInfoResponse).Resp, response.(GetPassengerInfoResponse).Err
 }
 
-// PublishOrder implements Service. Primarily useful in a client.
+// PublishOrder implements OriginService. Primarily useful in a client.
 func (e Endpoints) PublishOrder(ctx context.Context, req *pb.PublishOrderRequest) (resp *pb.PublishOrderReply, err error) {
 	request := PublishOrderRequest{Req: req}
 	response, err := e.PublishOrderEndpoint(ctx, request)

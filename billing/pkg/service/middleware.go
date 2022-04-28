@@ -41,7 +41,7 @@ func (l loggingMiddleware) GetBillList(ctx context.Context, userId int64) (resp 
 
 func (l loggingMiddleware) GetBill(ctx context.Context, billNum int64) (resp *pb.BillMsg, err error) {
 	defer func() {
-		l.logger.Log("method", "GetBill", "billNum", billNum, "resp", resp, "err", err)
+		l.logger.Log("method", "GetBill", "billNum", billNum, "err", err)
 	}()
 	return l.next.GetBill(ctx, billNum)
 }

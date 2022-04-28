@@ -28,10 +28,13 @@ func decodeGenTripRequest(_ context.Context, r interface{}) (interface{}, error)
 // TODO implement the encoder
 func encodeGenTripResponse(_ context.Context, r interface{}) (interface{}, error) {
 	resp := r.(endpoint.GenTripResponse)
+	if resp.Resp == nil {
+		return nil, resp.Err
+	}
 	return &pb.GenTripReply{
-		Status:               resp.Resp.Status,
-		Msg:                  resp.Resp.Msg,
-		Trip:                 resp.Resp.Trip,
+		Status: resp.Resp.Status,
+		Msg:    resp.Resp.Msg,
+		Trip:   resp.Resp.Trip,
 	}, resp.Err
 }
 func (g *grpcServer) GenTrip(ctx context1.Context, req *pb.GenTripRequest) (*pb.GenTripReply, error) {

@@ -35,14 +35,13 @@ import (
 	grpc1 "google.golang.org/grpc"
 )
 
-//var tracer opentracinggo.Tracer
 var tracer *tracing.TracingImpl
 var logger kitlog.Logger
 
 var fs = flag.NewFlagSet("Payment", flag.ExitOnError)
 var debugAddr = fs.String("debug-addr", ":8080", "Debug and metrics listen address")
 var httpAddr = fs.String("http-addr", ":8081", "HTTP listen address")
-var grpcAddr = fs.String("grpc-addr", "127.0.0.1:8082", "gRPC listen address")
+var grpcAddr = fs.String("grpc-addr", ":8082", "gRPC listen address")
 var zipkinURL = fs.String("zipkin-url", tracing.DefaultZipkinURL, "Enable Zipkin tracing via a collector URL e.g. http://localhost:9411/api/v1/spans")
 var serviceName = fs.String("service-name", "payment", "default service name")
 var consulAddr = fs.String("consul-addr", "127.0.0.1", "consul listen addr")
@@ -72,7 +71,7 @@ func Run() {
 	if err != nil {
 		logger.Log("NewDiscoverClient failed", err)
 	}
-	instanceID, ok := discoverClient.Register(*serviceName, "", "127.0.0.1", (*grpcAddr)[10:], nil, logger)
+	instanceID, ok := discoverClient.Register(*serviceName, "", "127.0.0.1", (*grpcAddr)[1:], nil, logger)
 	defer discoverClient.DeRegister(instanceID, logger)
 	if !ok {
 		log.Printf("service %s register failed", *serviceName)
@@ -120,7 +119,7 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]kitendpoint.Mi
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemPayment, config.MethodPay, "Pay histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemPayment, config.MethodPay, "Pay count")),
-			endpoint.TraceEndpoint(tracer.NativeTracer, config.MethodPay + "/service"),
+			endpoint.TraceEndpoint(tracer.NativeTracer, config.MethodPay+"/service"),
 		},
 	}
 

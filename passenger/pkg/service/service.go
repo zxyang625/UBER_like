@@ -4,10 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/golang/protobuf/proto"
-	"github.com/openzipkin/zipkin-go"
 	"github.com/openzipkin/zipkin-go/model"
 	"github.com/streadway/amqp"
+	"net/http"
 	"pkg/dao/models"
 	"pkg/dao/mq"
 	Err "pkg/error"
@@ -42,26 +41,27 @@ func (b *basicPassengerService) GetPassengerInfo(ctx context.Context, req *pb.Ge
 }
 
 func (b *basicPassengerService) PublishOrder(ctx context.Context, req *pb.PublishOrderRequest) (resp *pb.PublishOrderReply, err error) {
-	data, err := proto.Marshal(req)
+	traceID, _ := model.TraceIDFromHex(ctx.Value("Trace-ID").(string))
+	data, err := json.Marshal(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("err1 %v", err)
 	}
-	span := zipkin.SpanOrNoopFromContext(ctx)
-	mqModel := mq.MQModel{
-		Data: data,
-		SpanModel: model.SpanModel{
-			SpanContext:    model.SpanContext{
-				TraceID:  span.Context().TraceID,
-				ID:       span.Context().ID,
-				ParentID: span.Context().ParentID,
-			},
-		},
+	asyncReq := mq.AsyncReq{
+		Method:        http.MethodPost,
+		OriginApp:     "passenger",
+		OriginService: "publish-order",
+		DestApp:       "trip",
+		DestService:   "gen-trip",
+		TraceID:       traceID,
+		Priority:      ctx.Value("Length").(int),
+		Header:        nil,
+		Data:          data,
 	}
-	mqData, err := json.Marshal(mqModel)
+	mqData, err := json.Marshal(asyncReq)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("err2 %v", err)
 	}
-	err = PassengerMessageServer.Publish(ctx, PublishQueueName, mqData)
+	err = PassengerMessageServer.Publish(ctx, PublishQueueName, ctx.Value("Length").(int), mqData)
 	if err != nil {
 		return nil, err
 	}
@@ -75,9 +75,12 @@ func (b *basicPassengerService) PublishOrder(ctx context.Context, req *pb.Publis
 	select {
 	case <-c:
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("err3 %v", err)
 		}
-		err = proto.Unmarshal(d.Body, resp)
+		err = json.Unmarshal(d.Body, resp)
+		if err != nil {
+			return nil, fmt.Errorf("err4 %v", err)
+		}
 		return
 	case <-time.After(time.Second):
 		return nil, Err.New(Err.RPCRequestTimeout, "PublishOrder timeout")

@@ -43,7 +43,7 @@ type Failure interface {
 	Failed() error
 }
 
-// GenTrip implements Service. Primarily useful in a client.
+// GenTrip implements OriginService. Primarily useful in a client.
 func (e Endpoints) GenTrip(ctx context.Context, req *pb.GenTripRequest) (resp *pb.GenTripReply, err error) {
 	request := GenTripRequest{Req: req}
 	response, err := e.GenTripEndpoint(ctx, request)

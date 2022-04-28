@@ -71,7 +71,7 @@ type Failure interface {
 	Failed() error
 }
 
-// GenBill implements Service. Primarily useful in a client.
+// GenBill implements OriginService. Primarily useful in a client.
 func (e Endpoints) GenBill(ctx context.Context, req *pb.GenBillRequest) (resp *pb.GenBillReply, err error) {
 	request := GenBillRequest{Req: req}
 	response, err := e.GenBillEndpoint(ctx, request)
@@ -81,7 +81,7 @@ func (e Endpoints) GenBill(ctx context.Context, req *pb.GenBillRequest) (resp *p
 	return response.(GenBillResponse).Resp, response.(GenBillResponse).Err
 }
 
-// GetBillList implements Service. Primarily useful in a client.
+// GetBillList implements OriginService. Primarily useful in a client.
 func (e Endpoints) GetBillList(ctx context.Context, userId int64) (resp []*pb.BillMsg, err error) {
 	request := GetBillListRequest{UserId: userId}
 	response, err := e.GetBillListEndpoint(ctx, request)
@@ -119,7 +119,7 @@ func (r GetBillResponse) Failed() error {
 	return r.Err
 }
 
-// GetBill implements Service. Primarily useful in a client.
+// GetBill implements OriginService. Primarily useful in a client.
 func (e Endpoints) GetBill(ctx context.Context, billNum int64) (resp *pb.BillMsg, err error) {
 	request := GetBillRequest{BillNum: billNum}
 	response, err := e.GetBillEndpoint(ctx, request)
@@ -157,7 +157,7 @@ func (r SetPayedAndGetPriceResponse) Failed() error {
 	return r.E1
 }
 
-// SetPayedAndGetPrice implements Service. Primarily useful in a client.
+// SetPayedAndGetPrice implements OriginService. Primarily useful in a client.
 func (e Endpoints) SetPayedAndGetPrice(ctx context.Context, billNum int64) (f0 float32, e1 error) {
 	request := SetPayedAndGetPriceRequest{BillNum: billNum}
 	response, err := e.SetPayedAndGetPriceEndpoint(ctx, request)

@@ -7,7 +7,7 @@ package pb;
 service Driver {
  rpc GetDriverInfo (GetDriverInfoRequest) returns (GetDriverInfoReply) {
   option (google.api.http) = {
-   get: "/driver/get-driver-info"
+   get: "/driver/get-driver-info/{username}/{password}"
   };
  };
  rpc TakeOrder     (TakeOrderRequest    ) returns (TakeOrderReply    ) {

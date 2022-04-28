@@ -12,11 +12,11 @@ import (
 )
 
 type DiscoverClientImpl struct {
-	Host string
-	Port int
+	Host    string
+	Port    int
 	UseGRPC bool
-	client consul.Client
-	config *api.Config
+	client  consul.Client
+	config  *api.Config
 }
 
 func NewDiscoverClient(consulHost string, consulPort int, useGRPC bool) (DiscoveryClient, error) {
@@ -28,11 +28,11 @@ func NewDiscoverClient(consulHost string, consulPort int, useGRPC bool) (Discove
 	}
 	client := consul.NewClient(apiClient)
 	return &DiscoverClientImpl{
-		Host:   consulHost,
-		Port:   consulPort,
+		Host:    consulHost,
+		Port:    consulPort,
 		UseGRPC: useGRPC,
-		client: client,
-		config: consulConfig,
+		client:  client,
+		config:  consulConfig,
 	}, nil
 }
 
@@ -48,16 +48,16 @@ func (d *DiscoverClientImpl) Register(serviceName, healthCheckUrl, instanceHost,
 	instanceID := serviceName + "-" + uuid.New().String()
 	port, _ := strconv.Atoi(instancePort)
 	serviceRegistration := &api.AgentServiceRegistration{
-		ID: instanceID,
-		Name: serviceName,
+		ID:      instanceID,
+		Name:    serviceName,
 		Address: instanceHost,
-		Port: port + 1,
-		Meta: meta,
+		Port:    port + 1,
+		Meta:    meta,
 		Check: &api.AgentServiceCheck{
 			DeregisterCriticalServiceAfter: "30s",
-			Interval: "10s",
-			Timeout: "1s",
-			Notes: "Consul check service health status.",
+			Interval:                       "10s",
+			Timeout:                        "1s",
+			Notes:                          "Consul check service health status.",
 		},
 	}
 	//if instanceHost == "" {
@@ -81,9 +81,9 @@ func (d *DiscoverClientImpl) Register(serviceName, healthCheckUrl, instanceHost,
 	err := d.client.Register(serviceRegistration)
 	if err != nil {
 		logger.Log(Err.New(Err.DiscoverRegisterFail, err))
-		return  "", false
+		return "", false
 	}
-	log.Println("Register Service Success")
+	log.Println("Register OriginService Success")
 	return instanceID, true
 }
 
@@ -96,11 +96,11 @@ func (d *DiscoverClientImpl) DeRegister(instanceId string, logger kitlog.Logger)
 		logger.Log(Err.New(Err.DiscoverDeregisterFail, err))
 		return false
 	}
-	log.Println("Deregister Service Success")
+	log.Println("Deregister OriginService Success")
 	return true
 }
 
-func (d *DiscoverClientImpl) DiscoverServices(serviceName string, tag string ,passingOnly bool) ([]*api.ServiceEntry, error) {
+func (d *DiscoverClientImpl) DiscoverServices(serviceName string, tag string, passingOnly bool) ([]*api.ServiceEntry, error) {
 	entries, _, err := d.client.Service(serviceName, tag, passingOnly, nil)
 	if err != nil {
 		return nil, err

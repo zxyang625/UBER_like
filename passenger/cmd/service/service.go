@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/go-kit/kit/tracing/zipkin"
 	grpc2 "github.com/go-kit/kit/transport/grpc"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -35,14 +34,14 @@ import (
 	promhttp "github.com/prometheus/client_golang/prometheus/promhttp"
 	grpc1 "google.golang.org/grpc"
 )
-//TODO:
+
 var tracer *tracing.TracingImpl
 var logger kitlog.Logger
 
 var fs = flag.NewFlagSet("passenger", flag.ExitOnError)
 var debugAddr = fs.String("debug-addr", ":8080", "Debug and metrics listen address")
 var httpAddr = fs.String("http-addr", ":8081", "HTTP listen address")
-var grpcAddr = fs.String("grpc-addr", "127.0.0.1:8082", "gRPC listen address")
+var grpcAddr = fs.String("grpc-addr", ":8082", "gRPC listen address")
 var zipkinURL = fs.String("zipkin-url", tracing.DefaultZipkinURL, "Enable Zipkin tracing via a collector URL e.g. http://localhost:9411/api/v1/spans")
 var serviceName = fs.String("service-name", "passenger", "default service name")
 var consulAddr = fs.String("consul-addr", "127.0.0.1", "consul listen addr")
@@ -54,9 +53,8 @@ func Run() {
 
 	logger = config.GetKitLogger(config.SystemPassenger)
 
-	//TODO:
 	if *zipkinURL != "" {
-			logger.Log("tracer", "Zipkin", "URL", *zipkinURL)
+		logger.Log("tracer", "Zipkin", "URL", *zipkinURL)
 		tracingImpl, err := tracing.NewOpenTracingTracer(*serviceName)
 		if err != nil {
 			logger.Log("new zipkin tracer", "failed")
@@ -74,7 +72,7 @@ func Run() {
 	if err != nil {
 		logger.Log("NewDiscoverClient failed", err)
 	}
-	instanceID, ok := discoverClient.Register(*serviceName, "", "127.0.0.1", 0, nil, logger)
+	instanceID, ok := discoverClient.Register(*serviceName, "", "127.0.0.1", (*grpcAddr)[1:], nil, logger)
 	defer discoverClient.DeRegister(instanceID, logger)
 	if !ok {
 		log.Printf("service %s register failed", *serviceName)
@@ -124,14 +122,13 @@ func getEndpointMiddleware(logger kitlog.Logger) (mw map[string][]endpoint1.Midd
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemPassenger, config.MethodGetPassengerInfo, "GetPassengerInfo histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemPassenger, config.MethodGetPassengerInfo, "GetPassengerInfo count")),
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodGetPassengerInfo + "/service"),
+			endpoint.TraceEndpoint(tracer.NativeTracer, config.MethodGetPassengerInfo+"/service"),
 		},
 		"PublishOrder": {
 			endpoint.LoggingMiddleware(logger),
 			endpoint.InstrumentingMiddleware(promtheus.NewHistogram(config.SystemPassenger, config.MethodPublishOrder, "PublishOrder histogram")),
 			endpoint.CountingMiddleware(promtheus.NewCounter(config.SystemPassenger, config.MethodPublishOrder, "PublishOrder count")),
-			//TODO
-			zipkin.TraceEndpoint(tracer.NativeTracer, config.MethodPublishOrder + "/service"),
+			endpoint.TraceEndpoint(tracer.NativeTracer, config.MethodPublishOrder+"/service"),
 		},
 	}
 
@@ -191,6 +188,7 @@ func initGRPCGateway(g *group.Group) {
 	mux := runtime.NewServeMux(runtime.WithMetadata(func(ctx context.Context, request *http2.Request) metadata.MD {
 		md := metadata.MD{}
 		md.Set("Length", request.Header.Get("Length"))
+		md.Set("Trace-ID", request.Header.Get("Trace-ID"))
 		return md
 	}))
 	opts := []grpc1.DialOption{grpc1.WithInsecure()}

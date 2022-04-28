@@ -13,7 +13,7 @@ const (
 
 func InitMessageServer(mdws ...mq.Middleware) error {
 	var err error
-	PassengerMessageServer, err = mq.NewMessageServer( "passenger_queue")
+	PassengerMessageServer, err = mq.NewMessageServer("passenger_queue", 3)
 	if err != nil {
 		return err
 	}
@@ -22,4 +22,3 @@ func InitMessageServer(mdws ...mq.Middleware) error {
 	}
 	return nil
 }
-

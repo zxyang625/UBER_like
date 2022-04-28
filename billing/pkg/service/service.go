@@ -31,8 +31,6 @@ type basicBillingService struct{}
 var defaultBasicBillingService = &basicBillingService{}
 
 func (b *basicBillingService) SetPayedAndGetPrice(ctx context.Context, billNum int64) (float32, error) {
-	fmt.Println("ppppp", ctx.Value("Length"))
-	fmt.Println("ttttt", ctx.Value("Trace-ID"))
 	price, err := models.SetPayedAndGetPrice(billNum)
 	if err != nil {
 		return 0, fmt.Errorf("SetPayedAndGetPrice failed, err: %v", err)
@@ -70,6 +68,7 @@ func (b *basicBillingService) GetBill(ctx context.Context, billNum int64) (resp 
 	if err != nil {
 		return nil, err
 	}
+	resp = &pb.BillMsg{}
 	err = json.Unmarshal(data, resp)
 	if err != nil {
 		return nil, err
