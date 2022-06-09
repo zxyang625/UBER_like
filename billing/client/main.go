@@ -10,24 +10,23 @@ import (
 	"github.com/openzipkin/zipkin-go/reporter/http"
 	"google.golang.org/grpc"
 	"log"
-	"pkg/discover"
 	"pkg/tracing"
 )
 
 func main() {
-	{	//discover
-		discoverclient, err := discover.NewDiscoverClient("127.0.0.1", 8500, true)
-		if err != nil {
-			log.Printf("1, err: %v\n", err)
-			return
-		}
-		instances, err := discoverclient.DiscoverServices("Billing", "", true)
-		if err != nil {
-			log.Printf("2, err: %v\n", err)
-			return
-		}
-		fmt.Println(discover.GetInstance(instances))
-	}
+	//{	//discover
+	//	discoverclient, err := discover.NewDiscoverClient("127.0.0.1", 8500, true)
+	//	if err != nil {
+	//		log.Printf("1, err: %v\n", err)
+	//		return
+	//	}
+	//	instances, err := discoverclient.DiscoverServices("Billing", "", true)
+	//	if err != nil {
+	//		log.Printf("2, err: %v\n", err)
+	//		return
+	//	}
+	//	fmt.Println(discover.GetInstance(instances))
+	//}
 
 	//{	//http
 	//	reporter := http.NewReporter(tracing.DefaultZipkinURL) //zipkin
@@ -71,7 +70,6 @@ func main() {
 	//	fmt.Printf("%v %+v\n", res.Status, res.BillMsg)
 	//}
 
-
 	{ //grpc
 		reporter := http.NewReporter(tracing.DefaultZipkinURL)
 		defer reporter.Close()
@@ -111,4 +109,3 @@ func main() {
 		//childSpan.Finish()
 	}
 }
-

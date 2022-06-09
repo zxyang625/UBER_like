@@ -47,7 +47,7 @@ func RunGateway() {
 	}
 	defer consumer.Conn.Close()
 	gateway.ProxySendReq(logger, consumer, tracer.NativeTracer, "http://localhost:10030")
-	consumer.Consume(serviceName)
+	consumer.Consume(serviceName, 3)
 
 	errc := make(chan error)
 	go func() {

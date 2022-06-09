@@ -40,6 +40,7 @@ type AsyncReq struct {
 	DestService   string `json:"dest_service"`
 	// URL         string            `json:"url"`
 	TraceID  model.TraceID     `json:"trace_id"`
+	Length   int               `json:"length"`
 	Priority int               `json:"priority"`
 	Header   map[string]string `json:"header"`
 	Data     []byte            `json:"data"`

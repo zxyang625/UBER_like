@@ -17,12 +17,18 @@ func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInf
 	if !ok {
 		return nil, Err.New(Err.InterceptorInvalidCtx, "no metadata in context")
 	}
-	priority := md.Get("Length")
-	if len(priority) == 0 {
-		return nil, Err.New(Err.InterceptorInvalidMeta, "priority value not found")
+	length := md.Get("Length")
+	if len(length) == 0 {
+		return nil, Err.New(Err.InterceptorInvalidMeta, "length value not found")
 	}
-	num, _ := strconv.Atoi(priority[0])
+	priority := md.Get("Priority")
+	if len(priority) == 0 {
+		priority = []string{"1"}
+	}
+	num, _ := strconv.Atoi(length[0])
 	ctx = context.WithValue(ctx, "Length", num+1)
+	p, _ := strconv.Atoi(priority[0])
+	ctx = context.WithValue(ctx, "Priority", p)
 	if md.Get("Trace-ID")[0] != "" {
 		ctx = context.WithValue(ctx, "Trace-ID", md.Get("Trace-ID")[0])
 	} else {

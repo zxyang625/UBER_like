@@ -4,13 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/openzipkin/zipkin-go/model"
-	"github.com/streadway/amqp"
-	"log"
 	"net/http"
 	"pkg/dao/mq"
-	Err "pkg/error"
 	"pkg/pb"
-	"time"
 )
 
 // TripService describes the service.
@@ -24,10 +20,10 @@ var defaultBasicTripService = &basicTripService{}
 
 func (b *basicTripService) GenTrip(ctx context.Context, req *pb.GenTripRequest) (resp *pb.GenTripReply, err error) {
 	traceID, _ := model.TraceIDFromHex(ctx.Value("Trace-ID").(string))
-	data, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
+	//data, err := json.Marshal(req)
+	//if err != nil {
+	//	return nil, err
+	//}
 	asyncReq := mq.AsyncReq{
 		Method:        http.MethodPost,
 		OriginApp:     "trip",
@@ -35,9 +31,9 @@ func (b *basicTripService) GenTrip(ctx context.Context, req *pb.GenTripRequest) 
 		DestApp:       "driver",
 		DestService:   "take-order",
 		TraceID:       traceID,
-		Priority:      ctx.Value("Length").(int),
+		Length:        ctx.Value("Length").(int),
 		Header:        nil,
-		Data:          data,
+		Data:          nil,
 	}
 	mqData, err := json.Marshal(asyncReq)
 	if err != nil {
@@ -45,26 +41,27 @@ func (b *basicTripService) GenTrip(ctx context.Context, req *pb.GenTripRequest) 
 	}
 	err = TripMessageServer.Publish(ctx, PublishQueueName, ctx.Value("Length").(int), mqData)
 	rsp := &pb.TakeOrderReply{}
-	c := make(chan struct{}, 1)
-	d := amqp.Delivery{}
-	go func() {
-		d, err = TripMessageServer.ReceiveResp(ctx)
-		c <- struct{}{}
-	}()
-	select {
-	case <-c:
-		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal(d.Body, rsp)
-		if err != nil {
-			log.Println("json.Unmarshal(d.Body, rsp) error ", err)
-			return &pb.GenTripReply{Status: false, Msg: err.Error()}, err
-		}
-		return &pb.GenTripReply{Status: rsp.Status, Msg: rsp.Msg}, nil
-	case <-time.After(time.Second):
-		return &pb.GenTripReply{Status: false, Msg: "request timeout"}, Err.New(Err.RPCRequestTimeout, "PublishOrder timeout")
-	}
+	return &pb.GenTripReply{Status: true, Msg: rsp.Msg}, nil
+	//c := make(chan struct{}, 1)
+	//d := amqp.Delivery{}
+	//go func() {
+	//	d, err = TripMessageServer.ReceiveResp(ctx)
+	//	c <- struct{}{}
+	//}()
+	//select {
+	//case <-c:
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	err = json.Unmarshal(d.Body, rsp)
+	//	if err != nil {
+	//		log.Println("json.Unmarshal(d.Body, rsp) error ", err)
+	//		return &pb.GenTripReply{Status: false, Msg: err.Error()}, err
+	//	}
+	//	return &pb.GenTripReply{Status: rsp.Status, Msg: rsp.Msg}, nil
+	//case <-time.After(time.Second):
+	//	return &pb.GenTripReply{Status: false, Msg: "request timeout"}, Err.New(Err.RPCRequestTimeout, "PublishOrder timeout")
+	//}
 }
 
 // NewBasicTripService returns a naive, stateless implementation of TripService.

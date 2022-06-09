@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/consul/api"
 	"log"
 	Err "pkg/error"
-	"pkg/loadbalance"
 	"strconv"
 )
 
@@ -34,14 +33,6 @@ func NewDiscoverClient(consulHost string, consulPort int, useGRPC bool) (Discove
 		client:  client,
 		config:  consulConfig,
 	}, nil
-}
-
-func GetInstance(instances []*api.ServiceEntry) (addr string, port int, err error) {
-	if len(instances) == 0 {
-		return "", 0, Err.New(Err.DiscoverInstanceNotFound, "no usable instance exist")
-	}
-	loadBalancer := loadbalance.NewLoadBalancer()
-	return loadBalancer.Select(instances)
 }
 
 func (d *DiscoverClientImpl) Register(serviceName, healthCheckUrl, instanceHost, instancePort string, meta map[string]string, logger kitlog.Logger) (string, bool) {

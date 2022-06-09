@@ -40,14 +40,14 @@ func RunGateway() {
 		os.Exit(-1)
 	}
 
-	consumer, err := gateway.InitQueueServer(3, "trip_queue")
+	consumer, err := gateway.InitQueueServer(4, "trip_queue")
 	if err != nil {
 		logger.Log("method", "InitQueueServer", "err", err)
 		os.Exit(-1)
 	}
 	defer consumer.Conn.Close()
 	gateway.ProxySendReq(logger, consumer, tracer.NativeTracer, "http://localhost:10040")
-	consumer.Consume(serviceName)
+	consumer.Consume(serviceName, 3)
 
 	errc := make(chan error)
 	go func() {

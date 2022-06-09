@@ -17,7 +17,7 @@ const (
 
 func InitMessageServer(mdws ...mq.Middleware) error {
 	var err error
-	BillingMessageServer, err = mq.NewMessageServer("billing_queue", 3)
+	BillingMessageServer, err = mq.NewMessageServer("billing_queue", 5)
 	if err != nil {
 		return err
 	}

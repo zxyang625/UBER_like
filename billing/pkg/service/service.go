@@ -5,17 +5,18 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/go-kit/kit/log"
+	"github.com/golang/protobuf/proto"
+	"github.com/openzipkin/zipkin-go"
+	"github.com/openzipkin/zipkin-go/model"
+	"github.com/streadway/amqp"
 	"math"
 	"math/rand"
+	"net/http"
 	"pkg/dao/models"
 	"pkg/dao/mq"
 	"pkg/dao/redis"
 	"pkg/pb"
-
-	"github.com/go-kit/kit/log"
-	"github.com/golang/protobuf/proto"
-	"github.com/openzipkin/zipkin-go"
-	"github.com/streadway/amqp"
 )
 
 // BillingService describes the service.
@@ -60,19 +61,41 @@ func (b *basicBillingService) GenBill(ctx context.Context, req *pb.GenBillReques
 }
 
 func (b *basicBillingService) GetBill(ctx context.Context, billNum int64) (resp *pb.BillMsg, err error) {
-	bill, err := models.GetBill(billNum)
+	traceID, _ := model.TraceIDFromHex(ctx.Value("Trace-ID").(string))
+	p := ctx.Value("Priority").(int)
+	if p >= 5 {
+		return nil, nil
+	}
+	//bill, err := models.GetBill(billNum)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//data, err := json.Marshal(&models.Bill{BillNum: 250205, Price: 10, Origin: "二仙桥", Destination: "成华大道"})
+	req := mq.AsyncReq{
+		Method:        http.MethodGet,
+		OriginApp:     "billing",
+		OriginService: "get-bill",
+		DestApp:       "billing",
+		DestService:   "get-bill",
+		TraceID:       traceID,
+		Length:        ctx.Value("Length").(int),
+		Header:        nil,
+		Data:          nil,
+	}
 	if err != nil {
 		return nil, err
 	}
-	data, err := json.Marshal(bill)
+	mqData, err := json.Marshal(&req)
 	if err != nil {
 		return nil, err
 	}
+	/////////////////////////////////////////////
+	//if 1 <= ctx.Value("Priority").(int) && ctx.Value("Priority").(int) <= 5 {
+	err = BillingMessageServer.Publish(ctx, "billing_queue", ctx.Value("Priority").(int), mqData)
+	//} else if ctx.Value("Priority").(int) == 0 {
+	//	err = BillingMessageServer.Publish(ctx, "billing_queue", 1, mqData)
+	//}
 	resp = &pb.BillMsg{}
-	err = json.Unmarshal(data, resp)
-	if err != nil {
-		return nil, err
-	}
 	return resp, err
 }
 

@@ -132,7 +132,7 @@ func (t *tracingMiddleware) SendResp(ctx context.Context, routingKey, corrId str
 
 func (m *loggingMiddleware) Publish(ctx context.Context, name string, priority int, data []byte) (err error) {
 	defer func() {
-		m.logger.Log("system", "RabbitMQ", "method", "publish", "name", name, "err", err)
+		m.logger.Log("system", "RabbitMQ", "method", "publish", "name", name, "priority", priority, "err", err)
 	}()
 	return m.next.Publish(ctx, name, priority, data)
 }

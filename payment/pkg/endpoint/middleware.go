@@ -77,6 +77,7 @@ func TraceEndpoint(tracer *zipkin.Tracer, name string) endpoint.Middleware {
 			}
 			span := tracer.StartSpan(name, zipkin.Parent(model.SpanContext{TraceID: traceID}))
 			span.Tag("Length", strconv.Itoa(ctx.Value("Length").(int)))
+			span.Tag("Priority", strconv.Itoa(ctx.Value("Priority").(int)))
 			defer span.Finish()
 			return next(ctx, request)
 		}

@@ -31,9 +31,9 @@ func defaultHttpOptions(logger log.Logger, tracer *tracing.TracingImpl) map[stri
 }
 func defaultGRPCOptions(logger log.Logger, tracer *tracing.TracingImpl) map[string][]grpc.ServerOption {
 	options := map[string][]grpc.ServerOption{
-		"GenBill":             {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GenBill", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
-		"GetBill":             {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GetBill", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
-		"GetBillList":         {grpc.ServerErrorLogger(logger), grpc.ServerBefore(opentracing.GRPCToContext(tracer, "GetBillList", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)},
+		"GenBill":             {grpc.ServerErrorLogger(logger)},
+		"GetBill":             {grpc.ServerErrorLogger(logger)},
+		"GetBillList":         {grpc.ServerErrorLogger(logger)},
 		"SetPayedAndGetPrice": {grpc.ServerErrorLogger(logger)}, //, grpc.ServerBefore(opentracing.GRPCToContext(tracer, "SetPayedAndGetPrice", logger)), zipkin.GRPCServerTrace(tracer.NativeTracer)
 	}
 	return options

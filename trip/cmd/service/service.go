@@ -181,6 +181,7 @@ func initGRPCGateway(g *group.Group) {
 	mux := runtime.NewServeMux(runtime.WithMetadata(func(ctx context.Context, request *http2.Request) metadata.MD {
 		md := metadata.MD{}
 		md.Set("Length", request.Header.Get("Length"))
+		md.Set("Priority", request.Header.Get("Priority"))
 		md.Set("Trace-ID", request.Header.Get("Trace-ID"))
 		return md
 	}))

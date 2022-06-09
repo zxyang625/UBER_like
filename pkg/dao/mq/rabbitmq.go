@@ -98,19 +98,19 @@ func NewMessageServer(name string, length int) (MessageServer, error) {
 
 func (mq *MQ) Publish(ctx context.Context, name string, priority int, data []byte) (err error) {
 	name = name + "_" + strconv.Itoa(priority)
-	_, err = mq.PublishChannels[priority-1].QueueDeclare(
-		name,
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		return Err.New(Err.MQDeclareQueueFail, err.Error())
-	}
+	//_, err = mq.PublishChannels[priority-1].QueueDeclare(
+	//	name,
+	//	false,
+	//	false,
+	//	false,
+	//	false,
+	//	nil,
+	//)
+	//if err != nil {
+	//	return Err.New(Err.MQDeclareQueueFail, err.Error())
+	//}
 
-	err = mq.PublishChannels[priority].Publish(
+	err = mq.PublishChannels[priority-1].Publish(
 		"",
 		name,
 		false,
@@ -129,19 +129,19 @@ func (mq *MQ) Publish(ctx context.Context, name string, priority int, data []byt
 }
 
 func (mq *MQ) Consume(ctx context.Context, name string, handler DeliverHandler) error {
-	q, err := mq.PublishChannels[0].QueueDeclare(
-		name,
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		return Err.New(Err.MQDeclareQueueFail, err.Error())
-	}
+	//q, err := mq.PublishChannels[0].QueueDeclare(
+	//	name,
+	//	false,
+	//	false,
+	//	false,
+	//	false,
+	//	nil,
+	//)
+	//if err != nil {
+	//	return Err.New(Err.MQDeclareQueueFail, err.Error())
+	//}
 	msgs, err := mq.PublishChannels[0].Consume(
-		q.Name,
+		name,
 		"",
 		false,
 		false,

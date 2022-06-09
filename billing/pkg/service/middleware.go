@@ -48,7 +48,7 @@ func (l loggingMiddleware) GetBill(ctx context.Context, billNum int64) (resp *pb
 
 func (l loggingMiddleware) SetPayedAndGetPrice(ctx context.Context, billNum int64) (rsp float32, err error) {
 	defer func() {
-		l.logger.Log("method", "SetPayedAndGetPrice", "billNum", billNum, "priority", ctx.Value("priority"), "err", err)
+		l.logger.Log("method", "SetPayedAndGetPrice", "billNum", billNum, ctx.Value("priority"), "err", err)
 	}()
 	return l.next.SetPayedAndGetPrice(ctx, billNum)
 }

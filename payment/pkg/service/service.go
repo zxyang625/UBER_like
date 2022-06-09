@@ -4,13 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/openzipkin/zipkin-go/model"
-	"github.com/streadway/amqp"
 	"net/http"
 	"pkg/dao/models"
 	"pkg/dao/mq"
-	Err "pkg/error"
 	"pkg/pb"
-	"time"
 )
 
 // PaymentService describes the service.
@@ -23,7 +20,7 @@ type basicPaymentService struct {
 
 func (b *basicPaymentService) Pay(ctx context.Context, billNum int64, accountNum int64, payPassword string) (msg string, err error) {
 	traceID, _ := model.TraceIDFromHex(ctx.Value("Trace-ID").(string))
-	account, err := models.GetAccount(accountNum, payPassword)
+	_, err = models.GetAccount(accountNum, payPassword)
 	if err != nil {
 		return "GetAccount fail", err
 	}
@@ -36,7 +33,7 @@ func (b *basicPaymentService) Pay(ctx context.Context, billNum int64, accountNum
 		DestApp:       "billing",
 		DestService:   "set-payed-and-get-price",
 		TraceID:       traceID,
-		Priority:      ctx.Value("Length").(int),
+		Length:        ctx.Value("Length").(int),
 		Header:        nil,
 		Data:          data,
 	}
@@ -50,28 +47,28 @@ func (b *basicPaymentService) Pay(ctx context.Context, billNum int64, accountNum
 	if err != nil {
 		return "pay fail", err
 	}
-	c := make(chan struct{}, 1)
-	d := amqp.Delivery{}
-	go func() {
-		d, err = PayMessageServer.ReceiveResp(ctx)
-		c <- struct{}{}
-	}()
-	select {
-	case <-c:
-		if err != nil {
-			return "pay fail", err
-		}
-		rsp := pb.SetPayedAndGetPriceReply{}
-		_ = json.Unmarshal(d.Body, &rsp)
-		account.Asset -= rsp.Price
-		err = models.UpdateAccount(accountNum, account)
-		if err != nil {
-			return "pay fail", err
-		}
-		return "pay success", nil
-	case <-time.After(time.Second):
-		return "pay fail", Err.New(Err.RPCRequestTimeout, "pay request timeout")
-	}
+	//c := make(chan struct{}, 1)
+	//d := amqp.Delivery{}
+	//go func() {
+	//	d, err = PayMessageServer.ReceiveResp(ctx)
+	//	c <- struct{}{}
+	//}()
+	//select {
+	//case <-c:
+	//	if err != nil {
+	//		return "pay fail", err
+	//	}
+	//	rsp := pb.SetPayedAndGetPriceReply{}
+	//	_ = json.Unmarshal(d.Body, &rsp)
+	//	account.Asset -= rsp.Price
+	//	err = models.UpdateAccount(accountNum, account)
+	//	if err != nil {
+	//		return "pay fail", err
+	//	}
+	return "pay success", nil
+	//case <-time.After(time.Second):
+	//	return "pay fail", Err.New(Err.RPCRequestTimeout, "pay request timeout")
+	//}
 }
 
 // NewBasicPaymentService returns a naive, stateless implementation of PaymentService.

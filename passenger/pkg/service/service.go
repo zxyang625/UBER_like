@@ -5,13 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/openzipkin/zipkin-go/model"
-	"github.com/streadway/amqp"
 	"net/http"
 	"pkg/dao/models"
 	"pkg/dao/mq"
-	Err "pkg/error"
 	"pkg/pb"
-	"time"
 )
 
 // PassengerService describes the service.
@@ -53,7 +50,7 @@ func (b *basicPassengerService) PublishOrder(ctx context.Context, req *pb.Publis
 		DestApp:       "trip",
 		DestService:   "gen-trip",
 		TraceID:       traceID,
-		Priority:      ctx.Value("Length").(int),
+		Length:        ctx.Value("Length").(int),
 		Header:        nil,
 		Data:          data,
 	}
@@ -65,26 +62,31 @@ func (b *basicPassengerService) PublishOrder(ctx context.Context, req *pb.Publis
 	if err != nil {
 		return nil, err
 	}
-	resp = &pb.PublishOrderReply{}
-	c := make(chan struct{}, 1)
-	d := amqp.Delivery{}
-	go func() {
-		d, err = PassengerMessageServer.ReceiveResp(ctx)
-		c <- struct{}{}
-	}()
-	select {
-	case <-c:
-		if err != nil {
-			return nil, fmt.Errorf("err3 %v", err)
-		}
-		err = json.Unmarshal(d.Body, resp)
-		if err != nil {
-			return nil, fmt.Errorf("err4 %v", err)
-		}
-		return
-	case <-time.After(time.Second):
-		return nil, Err.New(Err.RPCRequestTimeout, "PublishOrder timeout")
+	resp = &pb.PublishOrderReply{
+		Status: true,
+		Msg:    "success",
 	}
+	return resp, nil
+	//c := make(chan struct{}, 1)
+	//d := amqp.Delivery{}
+	//go func() {
+	//	d, err = PassengerMessageServer.ReceiveResp(ctx)
+	//	c <- struct{}{}
+	//}()
+	//select {
+	//case <-c:
+	//	if err != nil {
+	//		return nil, fmt.Errorf("err3 %v", err)
+	//	}
+	//	err = json.Unmarshal(d.Body, resp)
+	//	if err != nil {
+	//		fmt.Println(string(d.Body))
+	//		return nil, fmt.Errorf("err4 %v", err)
+	//	}
+	//	return
+	//case <-time.After(time.Second):
+	//	return nil, Err.New(Err.RPCRequestTimeout, "PublishOrder timeout")
+	//}
 }
 
 // NewBasicPassengerService returns a naive, stateless implementation of PassengerService.
